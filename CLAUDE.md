@@ -32,6 +32,10 @@ Full-song references (YouTube targets by default) are judged on the guitar range
 - `tools/ableton_rack.py rocket` writes Audio Effect Racks (.adg) into `~/Music/Ableton/User Library/Presets/Audio Effects/Audio Effect Rack/Mix Doctor/`, built from Live's factory presets.
 - Live control: ableton-mcp (reviewed, pinned clone in `~/AI/ableton-mcp`, telemetry and dataset off) via `.mcp.json` (not committed). Remote Script in `User Library/Remote Scripts/AbletonMCP`; select AbletonMCP as Control Surface in Live. `tools/live.py` talks to it directly (port 9877).
 - Live's log: `~/Library/Preferences/Ableton/Live 12.4.15/Log.txt` (load errors, script messages).
+- Racks: `rocket` (first try), `rocket-notes` (clean + rocket in parallel), `rocket-blend` (the keeper: one serial chain, each device blends dry/wet, so the guitar sits inside the effect). The user prefers blended over "source + shadow".
+- Rack pitfalls already fixed in the builder: devices need `Id`; the shell's chain-select zones faded in; the shell mapped chain volume to macro 8 (silenced everything). Leave macro mappings only on what we set.
+- Shifter's envelope pitch is level-sensitive: hotter input needs less Climb, or pitch parks low and growls. Tune by recording BlackHole and turning macros via `tools/live.py`. The bridge only reaches top-level devices, so put anything we may tune on a macro.
+- Live's audio output must be "Main Output" for BlackHole to hear it (a restart once switched it to the headphones).
 
 ## The user's rig ("My guitar · Heavenly Tweed", = SEED)
 - Guitar (Input 1): Noise Gate → Amp Designer → Channel EQ → Compressor → Stereo Delay; send Bus 7; out Bus 5
