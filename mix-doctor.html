@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mix Doctor · AI Producer</title>
+<style>
+:root{
+  color-scheme: light;
+  --bg:#f3f2ef; --surface-1:#fcfcfb; --surface-2:#f0efec; --line:#dedcd6;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7974;
+  --series-1:#2a78d6; --series-2:#eb6834; --range:#e4e2dc;
+  --accent:#2a78d6; --high:#c23b3a; --med:#a86f00; --low:#52514e; --ok:#1b7a3f;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: dark;
+    --bg:#121211; --surface-1:#1a1a19; --surface-2:#232321; --line:#33332f;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8e86;
+    --series-1:#3987e5; --series-2:#d95926; --range:#2c2c29;
+    --accent:#3987e5; --high:#e66767; --med:#e0a43a; --low:#a9a89f; --ok:#4cc27a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text-primary);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 60px}
+header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+h1{font-size:26px;margin:0;letter-spacing:-.01em}
+.tag{color:var(--text-muted);font-size:14px}
+.tabs{display:flex;gap:6px;margin:18px 0 18px;border-bottom:1px solid var(--line)}
+.tab{background:none;border:0;padding:10px 14px;font:inherit;color:var(--text-secondary);cursor:pointer;
+  border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab[aria-selected=true]{color:var(--text-primary);border-color:var(--accent);font-weight:600}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:16px;margin:0 0 12px}
+.drops{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.drops{grid-template-columns:1fr}}
+.drop{border:1.5px dashed var(--line);border-radius:12px;padding:22px;text-align:center;cursor:pointer;background:var(--surface-1);transition:border-color .15s}
+.drop:hover,.drop.over{border-color:var(--accent)}
+.drop strong{display:block;font-size:15px}
+.drop span{color:var(--text-muted);font-size:13px}
+.drop .fname{color:var(--text-primary);font-size:13px;margin-top:6px;word-break:break-all}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+select,button.btn{font:inherit;padding:8px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary)}
+button.btn{cursor:pointer}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button:disabled{opacity:.5;cursor:default}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--surface-2);border-radius:10px;padding:12px 14px}
+.stat .k{font-size:12px;color:var(--text-secondary)}
+.stat .v{font-size:26px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.stat .u{font-size:13px;color:var(--text-muted);font-weight:400;margin-left:3px}
+.stat .h{font-size:12px;color:var(--text-muted)}
+.legend{display:flex;gap:16px;font-size:13px;color:var(--text-secondary);margin:4px 0 8px;flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+svg text{fill:var(--text-secondary);font-size:11px}
+.chart{position:relative}
+.tip{position:absolute;pointer-events:none;background:var(--surface-1);border:1px solid var(--line);border-radius:8px;
+  padding:6px 9px;font-size:12px;box-shadow:0 4px 14px rgba(0,0,0,.15);display:none;white-space:nowrap;z-index:2}
+ol.sug{margin:0;padding-left:0;list-style:none}
+ol.sug li{padding:10px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:64px 1fr;gap:10px}
+ol.sug li:first-child{border-top:0}
+.badge{font-size:11px;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:2px 6px;height:fit-content;text-align:center;border:1px solid currentColor}
+.b-HIGH{color:var(--high)} .b-MED{color:var(--med)} .b-LOW{color:var(--low)} .b-OK{color:var(--ok)}
+.sug b{display:block}
+.muted{color:var(--text-muted);font-size:13px}
+.note{background:var(--surface-2);border-radius:10px;padding:12px 14px;font-size:14px;color:var(--text-secondary)}
+ol.steps{padding-left:20px;margin:6px 0} ol.steps li{margin:4px 0}
+code{background:var(--surface-2);padding:1px 5px;border-radius:4px;font-size:13px}
+table.data{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+table.data td,table.data th{padding:5px 8px;border-bottom:1px solid var(--line);text-align:right}
+table.data th:first-child,table.data td:first-child{text-align:left}
+details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin-top:8px}
+.hidden{display:none!important}
+.live-dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--text-muted);margin-right:6px}
+.live-dot.on{background:#e34948;animation:p 1.2s infinite}
+@keyframes p{50%{opacity:.35}}
+.meterbar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:6px}
+.meterbar > div{height:100%;background:var(--series-1);width:0;transition:width .1s}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Mix Doctor</h1><span class="tag">AI Producer · analysis runs in your browser, nothing is uploaded</span></header>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" id="tab-file" aria-selected="true">Analyze a bounce</button>
+  <button class="tab" role="tab" id="tab-live" aria-selected="false">Live from Logic (BlackHole)</button>
+</div>
+
+<!-- ============ shared settings ============ -->
+<div class="row" style="margin-bottom:14px">
+  <label class="muted">Genre profile
+    <select id="genre">
+      <option>rock</option><option>funk</option><option>ska</option><option>reggae</option><option>disco</option><option>electronic</option>
+    </select></label>
+  <span class="muted">Used for tone ranges when there's no reference track.</span>
+</div>
+
+<!-- ============ FILE MODE ============ -->
+<section id="view-file">
+  <div class="drops">
+    <label class="drop" id="drop-mix"><input type="file" accept="audio/*,.wav,.aif,.aiff" hidden id="in-mix">
+      <strong>Your mix</strong><span>Drop a bounce from Logic (WAV, AIFF, MP3, M4A) or click</span><div class="fname" id="name-mix"></div></label>
+    <label class="drop" id="drop-ref"><input type="file" accept="audio/*,.wav,.aif,.aiff" hidden id="in-ref">
+      <strong>Reference track (optional)</strong><span>A released song you'd like to sound close to</span><div class="fname" id="name-ref"></div></label>
+  </div>
+  <div class="row" style="margin:14px 0 18px">
+    <button class="btn primary" id="go" disabled>Analyze</button>
+    <span class="muted" id="status"></span>
+  </div>
+  <div id="results" class="hidden">
+    <div class="card"><h2>Loudness</h2><div class="stats" id="stats"></div></div>
+    <div class="card"><h2>Suggested moves <span class="muted">· Logic Pro stock plugins</span></h2><ol class="sug" id="sug"></ol>
+      <div class="row" style="margin-top:12px"><button class="btn" id="copy">Copy report for Claude</button><span class="muted" id="copied"></span></div></div>
+    <div class="card"><h2>Tonal balance <span class="muted">· dB relative to the mids band (500 Hz–2 kHz)</span></h2>
+      <div class="legend" id="tone-legend"></div><div class="chart" id="tone"></div>
+      <details><summary>Show as table</summary><div id="tone-table"></div></details></div>
+    <div class="card"><h2>Loudness over time <span class="muted">· short-term LUFS (3 s)</span></h2>
+      <div class="chart" id="timeline"></div></div>
+    <div class="card"><h2>Stereo</h2><div class="stats" id="stereo"></div></div>
+  </div>
+</section>
+
+<!-- ============ LIVE MODE ============ -->
+<section id="view-live" class="hidden">
+  <div class="card" id="live-blocked">
+    <h2>One-time setup</h2>
+    <ol class="steps">
+      <li>Install <b>BlackHole 2ch</b> (free): <a href="https://existential.audio/blackhole/">existential.audio/blackhole</a></li>
+      <li>Open <b>Audio MIDI Setup</b> (in Applications › Utilities) → <b>+</b> → <b>Create Multi-Output Device</b>. Tick your headphones/interface <i>first</i>, then <b>BlackHole 2ch</b>, and enable <b>Drift Correction</b> on BlackHole.</li>
+      <li>In Logic: <b>Settings › Audio › Output Device</b> → <b>Multi-Output Device</b>. You still hear everything; BlackHole gets a copy.</li>
+      <li>Open <b>this page as a file in Chrome</b> on your Mac (double-click the downloaded <code>mix-doctor.html</code>, or drag it into Chrome). The hosted claude.ai version can't open audio inputs.</li>
+      <li>Click <b>Start listening</b>, allow access, choose <b>BlackHole 2ch</b>, and press play in Logic.</li>
+    </ol>
+    <p class="muted" id="live-env"></p>
+  </div>
+  <div class="card">
+    <div class="row">
+      <button class="btn primary" id="live-start">Start listening</button>
+      <select id="live-device" class="hidden"></select>
+      <button class="btn" id="live-reset" disabled>Reset integrated</button>
+      <span class="muted"><span class="live-dot" id="live-dot"></span><span id="live-status">Not listening</span></span>
+    </div>
+  </div>
+  <div class="card"><h2>Meters</h2><div class="stats" id="live-stats"></div></div>
+  <div class="card"><h2>Live tonal balance <span class="muted">· last few seconds, dB vs mids</span></h2>
+    <div class="legend" id="live-legend"></div><div class="chart" id="live-tone"></div>
+    <p class="muted">Tip: load a reference track in the other tab first, and its curve appears here too.</p></div>
+  <div class="card"><h2>What to try now <span class="muted">· updates every 2 s from what's playing</span></h2><ol class="sug" id="live-sug"><li><span></span><span class="muted">Start listening and play your project.</span></li></ol>
+    <div class="row" style="margin-top:12px"><button class="btn" id="live-copy" disabled>Copy snapshot for Claude</button><span class="muted" id="live-copied"></span></div></div>
+</section>
+</div>
+
+<script>
+"use strict";
+/* ===================================================================== DSP */
+class Biquad{
+  constructor(b0,b1,b2,a1,a2){Object.assign(this,{b0,b1,b2,a1,a2});this.z1=0;this.z2=0}
+  run(x,y){ // Direct Form II transposed; stateful across calls
+    let {b0,b1,b2,a1,a2,z1,z2}=this;
+    for(let i=0;i<x.length;i++){const v=x[i],o=b0*v+z1;z1=b1*v-a1*o+z2;z2=b2*v-a2*o;y[i]=o}
+    this.z1=z1;this.z2=z2;return y}
+}
+function norm(b,a){return new Biquad(b[0]/a[0],b[1]/a[0],b[2]/a[0],a[1]/a[0],a[2]/a[0])}
+function kWeight(sr){ // ITU-R BS.1770-4 K-weighting, re-derived for any sample rate
+  const G=3.999843853973347,Q=0.7071752369554196,fc=1681.974450955533;
+  const A=10**(G/40);let w0=2*Math.PI*fc/sr,al=Math.sin(w0)/(2*Q),c=Math.cos(w0),sA=Math.sqrt(A);
+  const s=norm([A*((A+1)+(A-1)*c+2*sA*al),-2*A*((A-1)+(A+1)*c),A*((A+1)+(A-1)*c-2*sA*al)],
+               [(A+1)-(A-1)*c+2*sA*al,2*((A-1)-(A+1)*c),(A+1)-(A-1)*c-2*sA*al]);
+  const Q2=0.5003270373238773,f2=38.13547087602444;w0=2*Math.PI*f2/sr;al=Math.sin(w0)/(2*Q2);c=Math.cos(w0);
+  const h=norm([(1+c)/2,-(1+c),(1+c)/2],[1+al,-2*c,1-al]);
+  return [s,h]}
+function lowpass(sr,f,Q){const w0=2*Math.PI*f/sr,al=Math.sin(w0)/(2*Q),c=Math.cos(w0);
+  return norm([(1-c)/2,1-c,(1-c)/2],[1+al,-2*c,1-al])}
+function lp120(sr){return [lowpass(sr,120,0.5412),lowpass(sr,120,1.3065)]} // 4th-order Butterworth
+function chain(filters,x){let y=new Float32Array(x.length);let src=x;for(const f of filters){f.run(src,y);src=y}return y}
+
+// True-peak: 4x oversampling with a 12-tap-per-phase windowed-sinc interpolator
+const TP_TAPS=(()=>{const t=[];for(const p of [0.25,0.5,0.75]){const c=[];let s=0;
+  for(let k=-5;k<=6;k++){const d=p-k;const sinc=d===0?1:Math.sin(Math.PI*d)/(Math.PI*d);
+    const w=0.5+0.5*Math.cos(Math.PI*d/6.5);c.push(sinc*w);s+=sinc*w}
+  t.push(c.map(v=>v/s))}return t})();
+function truePeakOf(x,samplePeak){let m=samplePeak;const thr=samplePeak*0.5,n=x.length;
+  for(let i=5;i<n-7;i++){const a=Math.abs(x[i]),b=Math.abs(x[i+1]);if(a<thr&&b<thr)continue;
+    for(const c of TP_TAPS){let v=0;for(let k=0;k<12;k++)v+=c[k]*x[i-5+k];v=Math.abs(v);if(v>m)m=v}}
+  return m}
+
+function fft(re,im){const n=re.length;
+  for(let i=1,j=0;i<n;i++){let bit=n>>1;for(;j&bit;bit>>=1)j^=bit;j^=bit;if(i<j){[re[i],re[j]]=[re[j],re[i]];[im[i],im[j]]=[im[j],im[i]]}}
+  for(let len=2;len<=n;len<<=1){const ang=-2*Math.PI/len,wr=Math.cos(ang),wi=Math.sin(ang);
+    for(let i=0;i<n;i+=len){let cr=1,ci=0;for(let j=0;j<len/2;j++){const a=i+j,b=a+len/2;
+      const tr=re[b]*cr-im[b]*ci,ti=re[b]*ci+im[b]*cr;re[b]=re[a]-tr;im[b]=im[a]-ti;re[a]+=tr;im[a]+=ti;
+      const nr=cr*wr-ci*wi;ci=cr*wi+ci*wr;cr=nr}}}}
+
+const BANDS=[["sub",20,60],["bass",60,250],["low-mids",250,500],["mids",500,2000],["upper-mids",2000,4000],["presence",4000,8000],["air",8000,20000]];
+function bandsFromPower(power,binHz,sr){ // power[] per bin -> dB per band (per-octave normalized), relative to mids
+  const out={};for(const [name,lo,hi0] of BANDS){const hi=Math.min(hi0,sr/2);let s=0;
+    for(let k=Math.ceil(lo/binHz);k*binHz<hi&&k<power.length;k++)s+=power[k];
+    out[name]=10*Math.log10(s/Math.log2(hi/lo)+1e-20)}
+  const r=out.mids;for(const k in out)out[k]=Math.round((out[k]-r)*10)/10;return out}
+function spectrumBands(mono,sr){const N=8192,win=new Float32Array(N);for(let i=0;i<N;i++)win[i]=0.5-0.5*Math.cos(2*Math.PI*i/N);
+  const pw=new Float64Array(N/2),re=new Float64Array(N),im=new Float64Array(N);let cnt=0;
+  for(let s=0;s+N<=mono.length;s+=N){for(let i=0;i<N;i++){re[i]=mono[s+i]*win[i];im[i]=0}fft(re,im);
+    for(let k=0;k<N/2;k++)pw[k]+=re[k]*re[k]+im[k]*im[k];cnt++}
+  return bandsFromPower(pw,sr/N,sr)}
+
+const dB=v=>Math.max(20*Math.log10(Math.max(v,1e-12)),-120);
+const r1=v=>Math.round(v*10)/10;
+function gatedIntegrated(blocks400){ // blocks400: array of loudness (LUFS) values
+  let l=blocks400.filter(v=>v>-70);if(!l.length)return -70;
+  const rel=10*Math.log10(l.reduce((a,v)=>a+10**(v/10),0)/l.length)-10;l=l.filter(v=>v>rel);
+  return 10*Math.log10(l.reduce((a,v)=>a+10**(v/10),0)/l.length)}
+function lra(st){let l=st.filter(v=>v>-70);if(l.length<2)return 0;
+  const rel=10*Math.log10(l.reduce((a,v)=>a+10**(v/10),0)/l.length)-20;l=l.filter(v=>v>rel).sort((a,b)=>a-b);
+  const q=p=>l[Math.min(l.length-1,Math.max(0,Math.round(p*(l.length-1))))];return q(.95)-q(.10)}
+function stereoFrom(L,R,sr){
+  let sl=0,sr2=0,slr=0,mL=0,mR=0,n=L.length;for(let i=0;i<n;i++){mL+=L[i];mR+=R[i]}mL/=n;mR/=n;
+  let sm=0,ss=0;const M=new Float32Array(n),S=new Float32Array(n);
+  for(let i=0;i<n;i++){const a=L[i]-mL,b=R[i]-mR;sl+=a*a;sr2+=b*b;slr+=a*b;M[i]=(L[i]+R[i])/2;S[i]=(L[i]-R[i])/2;sm+=M[i]*M[i];ss+=S[i]*S[i]}
+  const corr=(sl>0&&sr2>0)?slr/Math.sqrt(sl*sr2):1;
+  const Ml=chain(lp120(sr),M),Sl=chain(lp120(sr),S);let a=0,b=0;for(let i=0;i<n;i++){a+=Ml[i]*Ml[i];b+=Sl[i]*Sl[i]}
+  return {mono_file:false,correlation:Math.round(corr*100)/100,side_vs_mid_db:r1(dB(Math.sqrt(ss/n))-dB(Math.sqrt(sm/n))),
+    low_end_side_vs_mid_db:r1(dB(Math.sqrt(b/n))-dB(Math.sqrt(a/n)))}}
+
+function analyzeBuffer(buf,name){
+  const sr=buf.sampleRate,ch=Math.min(buf.numberOfChannels,2);
+  const chans=[];for(let c=0;c<ch;c++)chans.push(buf.getChannelData(c));
+  const n=chans[0].length,blk=Math.round(sr*0.1),nb=Math.floor(n/blk);
+  const z=new Float64Array(nb); let peak=0,sq=0,clipped=0;
+  for(const x of chans){const xk=chain(kWeight(sr),x);
+    for(let j=0;j<nb;j++){let s=0;for(let i=j*blk;i<(j+1)*blk;i++)s+=xk[i]*xk[i];z[j]+=s/blk}
+    for(let i=0;i<n;i++){const a=Math.abs(x[i]);if(a>peak)peak=a;if(a>=0.999)clipped++;sq+=x[i]*x[i]}}
+  const lk=ms=>-0.691+10*Math.log10(Math.max(ms,1e-12));
+  const avg=(j,w)=>{let s=0;for(let k=j;k<j+w;k++)s+=z[k];return s/w};
+  const b400=[];for(let j=0;j+4<=nb;j++)b400.push(lk(avg(j,4)));
+  const st=[];for(let j=0;j+30<=nb;j+=10)st.push(lk(avg(j,30)));
+  const I=gatedIntegrated(b400);
+  let tp=0;for(const x of chans)tp=Math.max(tp,truePeakOf(x,peak));
+  const rms=Math.sqrt(sq/(n*ch));
+  const mono=new Float32Array(n);for(const x of chans)for(let i=0;i<n;i++)mono[i]+=x[i]/ch;
+  return {file:name,sample_rate:sr,channels:buf.numberOfChannels,duration_s:r1(n/sr),
+    loudness:{integrated_lufs:r1(I),true_peak_dbtp:r1(dB(tp)),sample_peak_dbfs:r1(dB(peak)),loudness_range_lu:r1(lra(st)),
+      plr_db:r1(dB(tp)-I),crest_factor_db:r1(dB(peak)-dB(rms)),max_short_term_lufs:st.length?r1(Math.max(...st)):null,clipped_samples:clipped},
+    tone_vs_mids_db:spectrumBands(mono,sr),
+    stereo:ch<2?{mono_file:true}:stereoFrom(chans[0],chans[1],sr),
+    short_term_lufs:st.map(v=>r1(v))}}
+
+/* ============================================================= SUGGESTIONS */
+const GENRE_TONE={
+  rock:{sub:[-14,-5],bass:[-3,4],"low-mids":[-3,2],"upper-mids":[-5,0],presence:[-9,-3],air:[-16,-8]},
+  funk:{sub:[-13,-5],bass:[-2,5],"low-mids":[-3,2],"upper-mids":[-5,0],presence:[-9,-3],air:[-16,-8]},
+  reggae:{sub:[-10,-1],bass:[0,7],"low-mids":[-3,2],"upper-mids":[-6,-1],presence:[-10,-4],air:[-17,-9]},
+  ska:{sub:[-13,-5],bass:[-2,4],"low-mids":[-3,2],"upper-mids":[-5,0],presence:[-9,-3],air:[-16,-8]},
+  disco:{sub:[-12,-4],bass:[-1,5],"low-mids":[-3,2],"upper-mids":[-5,0],presence:[-8,-2],air:[-15,-7]},
+  electronic:{sub:[-8,1],bass:[0,7],"low-mids":[-4,1],"upper-mids":[-6,0],presence:[-9,-3],air:[-15,-7]}};
+const TIPS={sub:["Channel EQ low cut at ~30 Hz on the Stereo Out, and high-pass instruments that don't need sub (guitars, keys, vocals) at 80–120 Hz","boost 50–60 Hz on the kick or bass, or add a sub layer"],
+  bass:["cut 2–3 dB around 100–200 Hz on bass or guitars; check kick and bass aren't stacked at the same frequency","boost bass guitar around 80–120 Hz, or bring the bass fader up 1–2 dB"],
+  "low-mids":["this is the 'mud' zone: cut 2–4 dB at 250–400 Hz on guitars, keys and the vocal bus (wide bell)","the mix may sound thin: add warmth with a small 200–300 Hz boost on guitars or vocals"],
+  "upper-mids":["harsh zone: cut 2–3 dB at 2.5–3.5 kHz on guitars/vocals, or use DeEsser 2 / Multipressor","add 1–2 dB around 2–3 kHz on vocal and snare so they cut through"],
+  presence:["sibilance/hiss: DeEsser 2 on vocals, gentle high shelf cut above 6 kHz","add a high shelf +1.5 dB at 5 kHz on vocals or overheads"],
+  air:["lower cymbals/hi-hat, or high shelf −1.5 dB at 10 kHz on the Stereo Out","high shelf +1–2 dB at 10–12 kHz on the Stereo Out (Channel EQ) for air"]};
+function suggest(a,genre,ref,live){
+  const s=[],L=a.loudness,tone=a.tone_vs_mids_db,st=a.stereo;
+  if(L.clipped_samples>0)s.push(["HIGH","Clipping",`${L.clipped_samples} samples hit 0 dBFS. Lower the Stereo Out fader or the limiter output until nothing touches 0 dB.`]);
+  if(L.true_peak_dbtp>-1)s.push(["HIGH","True peak too hot",`True peak is ${L.true_peak_dbtp} dBTP. On the Stereo Out put Adaptive Limiter last, enable True Peak Detection, Out Ceiling −1.0 dB. Streaming services can distort peaks above −1 dBTP.`]);
+  if(L.integrated_lufs!=null){
+    if(L.integrated_lufs<-16)s.push(["MED","Quiet for release",`Integrated loudness is ${L.integrated_lufs} LUFS. For a release master aim around −14 to −9 LUFS: raise Adaptive Limiter Gain a few dB at a time (or try Logic's Mastering Assistant) with the ceiling at −1 dB. If this mix goes to a mastering engineer, quiet is fine; just keep peaks below −3 dBFS.`]);
+    else if(L.integrated_lufs>-8)s.push(["MED","Very loud",`${L.integrated_lufs} LUFS is very loud. Spotify/Apple will turn it down to about −14/−16 anyway, so you lose punch for nothing. Back off Adaptive Limiter Gain until PLR is at least 8 dB.`]);
+    if(L.plr_db<8)s.push(["MED","Squashed dynamics",`Peak-to-loudness ratio is ${L.plr_db} dB (under 8 sounds flat). Reduce limiting and bus compression; if you use Compressor on the Stereo Out, try 1.5:1–2:1 with 20–30 ms attack so drum hits pass through.`]);
+    else if(L.plr_db>16&&L.integrated_lufs<-16)s.push(["LOW","Very dynamic",`PLR is ${L.plr_db} dB. Open, but may sound weak next to released tracks. Light glue: Compressor on the Stereo Out (Vintage VCA, 2:1, attack 10–30 ms, auto release, 1–2 dB gain reduction).`]);
+  }
+  if(ref){const rt=ref.tone_vs_mids_db;for(const [b,lo,hi] of BANDS){if(b==="mids")continue;const d=tone[b]-rt[b];
+    if(Math.abs(d)>=3)s.push(["MED",`${b} vs reference`,`Your ${b} (${lo}–${hi} Hz) is ${d>0?"+":""}${d.toFixed(1)} dB compared with the reference. ${d>0?"Cut":"Boost"} about ${Math.min(Math.abs(d)/2,4).toFixed(1)} dB with a wide bell (Q 0.7) in Channel EQ on the Stereo Out, or better, fix it on the tracks that live in that range.`])}}
+  else{const t=GENRE_TONE[genre];for(const b in t){const [lo,hi]=t[b],v=tone[b];
+    if(v>hi)s.push(["MED",`Too much ${b}`,`${b} sits at ${v>0?"+":""}${v.toFixed(1)} dB vs mids (typical ${genre}: ${lo} to ${hi}). Try: ${TIPS[b][0]}.`]);
+    else if(v<lo)s.push(["MED",`Not enough ${b}`,`${b} sits at ${v>0?"+":""}${v.toFixed(1)} dB vs mids (typical ${genre}: ${lo} to ${hi}). Try: ${TIPS[b][1]}.`])}}
+  if(st&&!st.mono_file){
+    if(st.correlation<0.2)s.push(["HIGH","Phase / mono problems",`Stereo correlation is ${st.correlation}. Parts may disappear on phone speakers. Check stereo wideners and doubled guitars; use Direction Mixer to narrow, and check in mono (Gain plugin › Mono).`]);
+    else if(st.correlation>0.95)s.push(["LOW","Almost mono",`Correlation ${st.correlation}: nearly mono. Pan doubled guitars/keys left and right, add a stereo reverb (ChromaVerb) on a send.`]);
+    if(st.low_end_side_vs_mid_db>-15)s.push(["MED","Wide low end",`Below 120 Hz the side signal is only ${Math.abs(st.low_end_side_vs_mid_db)} dB below the mid. Keep bass and kick centered (Direction Mixer on bass tracks, no stereo wideners on low instruments).`]);
+  }
+  if(!s.length)s.push(["OK","No big issues",live?"Nothing out of range in what's playing. Keep going.":"Nothing out of range. Trust your ears and compare with a reference track."]);
+  const o={HIGH:0,MED:1,LOW:2,OK:3};return s.sort((x,y)=>o[x[0]]-o[y[0]])}
+
+function reportMd(a,sug,genre,ref){const L=a.loudness,st=a.stereo;const r=[`# Mix Doctor report: ${a.file}`,"",
+  `${a.duration_s} s, ${a.sample_rate} Hz. Genre: ${genre}${ref?`. Reference: ${ref.file}`:""}`,"","## Loudness",
+  `- Integrated: ${L.integrated_lufs} LUFS`,`- True peak: ${L.true_peak_dbtp} dBTP`,`- PLR: ${L.plr_db} dB`,`- Loudness range: ${L.loudness_range_lu} LU`,`- Loudest 3 s: ${L.max_short_term_lufs} LUFS`,`- Clipped samples: ${L.clipped_samples}`,"",
+  "## Tonal balance (dB vs mids)"];
+  for(const [b,lo,hi] of BANDS)r.push(`- ${b} (${lo}-${hi} Hz): ${a.tone_vs_mids_db[b]}${ref?` (reference ${ref.tone_vs_mids_db[b]})`:""}`);
+  if(st&&!st.mono_file)r.push("","## Stereo",`- Correlation: ${st.correlation}`,`- Side vs mid: ${st.side_vs_mid_db} dB`,`- Low end side vs mid: ${st.low_end_side_vs_mid_db} dB`);
+  r.push("","## Suggested moves");sug.forEach((x,i)=>r.push(`${i+1}. [${x[0]}] ${x[1]}: ${x[2]}`));
+  r.push("","---",`I'm mixing a ${genre} song in Logic Pro. Here is my Mix Doctor report. Give me the 5 most important moves, in order, with exact plugin settings, and tell me which track to apply each one to. My tracks are: [list your tracks].`);
+  return r.join("\n")}
+
+/* ================================================================ RENDERING */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function statHTML(k,v,u,h){return `<div class="stat"><div class="k">${k}</div><div class="v">${v??"–"}<span class="u">${u||""}</span></div><div class="h">${h||""}</div></div>`}
+function sugHTML(sug){return sug.map(([p,t,x])=>`<li><span class="badge b-${p}">${p}</span><div class="sug"><b>${esc(t)}</b>${esc(x)}</div></li>`).join("")}
+function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
+
+function attachTip(container){let tip=container.querySelector(".tip");if(!tip){tip=document.createElement("div");tip.className="tip";container.appendChild(tip)}return tip}
+function showTip(container,tip,html,x,y){tip.innerHTML=html;tip.style.display="block";
+  const w=container.clientWidth,tw=tip.offsetWidth;tip.style.left=Math.min(Math.max(0,x-tw/2),w-tw)+"px";tip.style.top=(y-tip.offsetHeight-10)+"px"}
+
+function renderTone(el,legendEl,you,ref,range){
+  const W=Math.max(320,el.clientWidth||900),H=260,m={l:40,r:10,t:14,b:38},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  const vals=[...Object.values(you),...(ref?Object.values(ref):[]),...(range?Object.values(range).flat():[])];
+  let lo=Math.min(-18,...vals),hi=Math.max(6,...vals);lo=Math.floor(lo/6)*6;hi=Math.ceil(hi/6)*6;
+  const y=v=>m.t+(hi-v)/(hi-lo)*ih,bw=iw/BANDS.length;
+  let g="";for(let v=lo;v<=hi;v+=6)g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="${css('--line')}" stroke-width="${v===0?1.5:1}"/><text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${v>0?"+":""}${v}</text>`;
+  let marks="";BANDS.forEach(([b,l,h],i)=>{const cx=m.l+bw*i+bw/2;
+    if(range&&range[b])marks+=`<rect x="${cx-bw*0.36}" y="${y(range[b][1])}" width="${bw*0.72}" height="${y(range[b][0])-y(range[b][1])}" fill="${css('--range')}" rx="4"/>`;
+    const v=you[b],bwid=Math.min(28,bw*0.3),top=Math.min(y(v),y(0)),hh=Math.max(2,Math.abs(y(v)-y(0)));
+    marks+=`<rect x="${cx-bwid/2}" y="${top}" width="${bwid}" height="${hh}" fill="${css('--series-1')}" rx="4"/>`;
+    if(ref)marks+=`<line x1="${cx-bw*0.3}" x2="${cx+bw*0.3}" y1="${y(ref[b])}" y2="${y(ref[b])}" stroke="${css('--series-2')}" stroke-width="3" stroke-linecap="round"/>`;
+    marks+=`<text x="${cx}" y="${H-20}" text-anchor="middle" style="fill:${css('--text-primary')}">${b}</text><text x="${cx}" y="${H-6}" text-anchor="middle">${l>=1000?l/1000+"k":l}–${h>=1000?h/1000+"k":h}</text>`;
+    marks+=`<rect class="hit" data-b="${b}" x="${m.l+bw*i}" y="${m.t}" width="${bw}" height="${ih}" fill="transparent"/>`});
+  el.innerHTML=`<svg width="${W}" height="${H}" role="img" aria-label="Tonal balance by band">${g}${marks}</svg>`;
+  const tip=attachTip(el);
+  el.querySelectorAll(".hit").forEach(r=>{r.addEventListener("mousemove",e=>{const b=r.dataset.b;const rc=el.getBoundingClientRect();
+    showTip(el,tip,`<b>${b}</b><br>You: ${you[b]>0?"+":""}${you[b]} dB${ref?`<br>Reference: ${ref[b]>0?"+":""}${ref[b]} dB`:""}${range&&range[b]?`<br>Typical: ${range[b][0]} to ${range[b][1]}`:""}`,e.clientX-rc.left,e.clientY-rc.top)});
+    r.addEventListener("mouseleave",()=>tip.style.display="none")});
+  legendEl.innerHTML=`<span><i style="background:${css('--series-1')}"></i>Your mix</span>`+(ref?`<span><i style="background:${css('--series-2')};height:3px;vertical-align:3px"></i>Reference</span>`:"")+(range?`<span><i style="background:${css('--range')}"></i>Typical range for genre</span>`:"")}
+
+function renderTimeline(el,st,I,refSt){
+  const W=Math.max(320,el.clientWidth||900),H=220,m={l:40,r:12,t:12,b:26},iw=W-m.l-m.r,ih=H-m.t-m.b;
+  if(!st.length){el.innerHTML='<p class="muted">Song too short for short-term loudness.</p>';return}
+  const all=[...st,...(refSt||[]),-14];let lo=Math.floor((Math.min(...all)-1)/3)*3,hi=Math.ceil((Math.max(...all)+1)/3)*3;
+  const n=Math.max(st.length,refSt?refSt.length:0),x=i=>m.l+i/Math.max(1,n-1)*iw,y=v=>m.t+(hi-v)/(hi-lo)*ih;
+  let g="";for(let v=lo;v<=hi;v+=3)g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(v)}" y2="${y(v)}" stroke="${css('--line')}"/><text x="${m.l-6}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  const step=[5,10,15,30,60,120].find(s=>n/s<=8)||240;for(let i=0;i<n;i+=step)g+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle">${Math.floor(i/60)}:${String(i%60).padStart(2,"0")}</text>`;
+  g+=`<line x1="${m.l}" x2="${W-m.r}" y1="${y(-14)}" y2="${y(-14)}" stroke="${css('--text-muted')}" stroke-dasharray="4 4"/><text x="${W-m.r}" y="${y(-14)-5}" text-anchor="end">−14 streaming level</text>`;
+  const path=a=>a.map((v,i)=>`${i?"L":"M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  let lines="";if(refSt)lines+=`<path d="${path(refSt)}" fill="none" stroke="${css('--series-2')}" stroke-width="2" stroke-linejoin="round"/>`;
+  lines+=`<path d="${path(st)}" fill="none" stroke="${css('--series-1')}" stroke-width="2" stroke-linejoin="round"/>`;
+  el.innerHTML=`<div class="legend"><span><i style="background:${css('--series-1')}"></i>Your mix</span>${refSt?`<span><i style="background:${css('--series-2')}"></i>Reference</span>`:""}</div>
+   <svg width="${W}" height="${H}" role="img" aria-label="Short-term loudness over time">${g}${lines}<line id="xh" y1="${m.t}" y2="${m.t+ih}" stroke="${css('--text-muted')}" visibility="hidden"/><circle id="xd" r="4" fill="${css('--series-1')}" stroke="${css('--surface-1')}" stroke-width="2" visibility="hidden"/><rect x="${m.l}" y="${m.t}" width="${iw}" height="${ih}" fill="transparent" id="xhit"/></svg>`;
+  const tip=attachTip(el),svg=el.querySelector("svg"),xh=svg.querySelector("#xh"),xd=svg.querySelector("#xd");
+  svg.querySelector("#xhit").addEventListener("mousemove",e=>{const rc=svg.getBoundingClientRect();const i=Math.round((e.clientX-rc.left-m.l)/iw*(n-1));
+    if(i<0||i>=st.length)return;xh.setAttribute("x1",x(i));xh.setAttribute("x2",x(i));xh.setAttribute("visibility","visible");
+    xd.setAttribute("cx",x(i));xd.setAttribute("cy",y(st[i]));xd.setAttribute("visibility","visible");
+    showTip(el,tip,`<b>${Math.floor(i/60)}:${String(i%60).padStart(2,"0")}</b><br>You: ${st[i]} LUFS${refSt&&refSt[i]!=null?`<br>Reference: ${refSt[i]} LUFS`:""}`,x(i),y(st[i])+28)});
+  svg.querySelector("#xhit").addEventListener("mouseleave",()=>{tip.style.display="none";xh.setAttribute("visibility","hidden");xd.setAttribute("visibility","hidden")})}
+
+/* ================================================================ FILE MODE */
+let mixFile=null,refFile=null,lastMix=null,lastRef=null;
+function setupDrop(dropId,inputId,nameId,set){const d=$(dropId),inp=$(inputId);
+  inp.addEventListener("change",()=>{if(inp.files[0]){set(inp.files[0]);$(nameId).textContent=inp.files[0].name;$("go").disabled=!mixFile}});
+  d.addEventListener("dragover",e=>{e.preventDefault();d.classList.add("over")});d.addEventListener("dragleave",()=>d.classList.remove("over"));
+  d.addEventListener("drop",e=>{e.preventDefault();d.classList.remove("over");const f=e.dataTransfer.files[0];if(f){set(f);$(nameId).textContent=f.name;$("go").disabled=!mixFile}})}
+setupDrop("drop-mix","in-mix","name-mix",f=>{mixFile=f});
+setupDrop("drop-ref","in-ref","name-ref",f=>{refFile=f;lastRef=null});
+async function decode(file){const ctx=new (window.AudioContext||window.webkitAudioContext)();
+  try{return await ctx.decodeAudioData(await file.arrayBuffer())}finally{ctx.close&&ctx.close()}}
+const tick=()=>new Promise(r=>setTimeout(r,20));
+$("go").addEventListener("click",async()=>{$("go").disabled=true;
+  try{$("status").textContent="Decoding…";await tick();const mb=await decode(mixFile);
+    $("status").textContent="Measuring loudness, peaks, tone and stereo…";await tick();lastMix=analyzeBuffer(mb,mixFile.name);
+    if(refFile){$("status").textContent="Analyzing reference…";await tick();lastRef=analyzeBuffer(await decode(refFile),refFile.name)}
+    renderFile();$("status").textContent="Done.";}
+  catch(e){console.error(e);$("status").textContent="Couldn't read that file. Bounce as WAV (24-bit) and try again."}
+  $("go").disabled=false});
+$("genre").addEventListener("change",()=>{if(lastMix)renderFile()});
+function renderFile(){const a=lastMix,ref=lastRef,genre=$("genre").value,L=a.loudness;
+  $("results").classList.remove("hidden");
+  $("stats").innerHTML=statHTML("Integrated loudness",L.integrated_lufs,"LUFS","Streaming plays around −14")+statHTML("True peak",L.true_peak_dbtp,"dBTP","Keep at −1 or lower")
+    +statHTML("Punch (PLR)",L.plr_db,"dB","<8 squashed · 9–14 healthy")+statHTML("Loudness range",L.loudness_range_lu,"LU","Verse vs chorus difference")
+    +statHTML("Loudest 3 s",L.max_short_term_lufs,"LUFS","Usually the chorus")+statHTML("Clipped samples",L.clipped_samples,"","Should be 0");
+  if(ref)$("stats").innerHTML+=statHTML("Reference loudness",ref.loudness.integrated_lufs,"LUFS",`PLR ${ref.loudness.plr_db} dB · TP ${ref.loudness.true_peak_dbtp}`);
+  const sug=suggest(a,genre,ref);$("sug").innerHTML=sugHTML(sug);
+  $("copy").onclick=async()=>{try{await navigator.clipboard.writeText(reportMd(a,sug,genre,ref));$("copied").textContent="Copied. Paste it into Claude."}catch(e){$("copied").textContent="Copy blocked by the browser."}};
+  const range=ref?null:GENRE_TONE[genre];
+  renderTone($("tone"),$("tone-legend"),a.tone_vs_mids_db,ref&&ref.tone_vs_mids_db,range);
+  $("tone-table").innerHTML=`<table class="data"><tr><th>Band</th><th>You</th>${ref?"<th>Reference</th>":""}${range?"<th>Typical</th>":""}</tr>`+
+    BANDS.map(([b])=>`<tr><td>${b}</td><td>${a.tone_vs_mids_db[b]}</td>${ref?`<td>${ref.tone_vs_mids_db[b]}</td>`:""}${range?`<td>${range[b]?range[b].join(" to "):"0 (reference band)"}</td>`:""}</tr>`).join("")+"</table>";
+  renderTimeline($("timeline"),a.short_term_lufs,L.integrated_lufs,ref&&ref.short_term_lufs);
+  const st=a.stereo;$("stereo").innerHTML=st.mono_file?'<p class="muted">Mono file.</p>':
+    statHTML("Correlation",st.correlation,"","1 mono · 0 very wide · <0 trouble")+statHTML("Width (side vs mid)",st.side_vs_mid_db,"dB","Overall stereo width")+statHTML("Low end width",st.low_end_side_vs_mid_db,"dB","Below 120 Hz; should be < −15")}
+window.addEventListener("resize",()=>{if(lastMix&&!$("view-file").classList.contains("hidden"))renderFile()});
+
+/* ================================================================ LIVE MODE */
+const live={ctx:null,stream:null,proc:null,an:null,timer:null,raf:null};
+function liveEnvNote(){const ok=!!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)&&window.isSecureContext;
+  const framed=window.self!==window.top;
+  $("live-env").textContent=framed?"You're viewing the hosted version: live input is blocked here. Use the downloaded file in Chrome.":
+    ok?"This browser can use audio inputs. Complete the setup above, then press Start.":"This browser can't open audio inputs from here. Use Chrome and open the file directly."}
+function resetLive(){Object.assign(live,{z:[],b400:[],I:null,tpMax:0,clip:0,peakWin:0,sl:0,sr2:0,slr:0,sm:0,ss:0,sml:0,ssl:0,acc:[0,0],accN:0,bandsAvg:null,secs:0})}
+async function startLive(deviceId){
+  stopLive();resetLive();
+  const constraints={audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:2}};
+  if(deviceId)constraints.audio.deviceId={exact:deviceId};
+  const stream=await navigator.mediaDevices.getUserMedia(constraints);
+  // populate device list (labels available after permission)
+  const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==="audioinput");
+  const sel=$("live-device");sel.innerHTML=devs.map(d=>`<option value="${d.deviceId}">${esc(d.label||"Input")}</option>`).join("");sel.classList.remove("hidden");
+  const bh=devs.find(d=>/blackhole/i.test(d.label));const cur=stream.getAudioTracks()[0].getSettings().deviceId;
+  if(!deviceId&&bh&&bh.deviceId!==cur){stream.getTracks().forEach(t=>t.stop());return startLive(bh.deviceId)}
+  sel.value=cur||deviceId||"";
+  const ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:"playback"});await ctx.resume();
+  const sr=ctx.sampleRate,src=ctx.createMediaStreamSource(stream);
+  const proc=ctx.createScriptProcessor(4096,2,2),mute=ctx.createGain();mute.gain.value=0;
+  const kw=[kWeight(sr),kWeight(sr)],lp=[lp120(sr),lp120(sr)],blk=Math.round(sr*0.1);
+  const an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0.85;
+  src.connect(proc);src.connect(an);proc.connect(mute);mute.connect(ctx.destination);
+  proc.onaudioprocess=e=>{const ib=e.inputBuffer,L=ib.getChannelData(0),R=ib.numberOfChannels>1?ib.getChannelData(1):L;
+    const n=L.length;let pk=0;
+    const kL=chain(kw[0],L),kR=chain(kw[1],R);
+    for(let i=0;i<n;i++){live.acc[0]+=kL[i]*kL[i]+kR[i]*kR[i];if(++live.accN===blk){ // exact 100 ms blocks
+      live.z.push(live.acc[0]/blk);live.acc[0]=0;live.accN=0;
+      if(live.z.length>=4){const m=(live.z.at(-1)+live.z.at(-2)+live.z.at(-3)+live.z.at(-4))/4;live.b400.push(-0.691+10*Math.log10(Math.max(m,1e-12)))}
+      if(live.z.length>600)live.z.splice(0,live.z.length-600)}}
+    for(let i=0;i<n;i++){const a=Math.max(Math.abs(L[i]),Math.abs(R[i]));if(a>pk)pk=a;if(a>=0.999)live.clip++}
+    const tp=Math.max(truePeakOf(L,pk),truePeakOf(R,pk));if(tp>live.tpMax)live.tpMax=tp;live.peakWin=Math.max(live.peakWin*0.9,tp);
+    // stereo (exponential window ~3 s)
+    const d=Math.exp(-n/(sr*3));for(const k of ["sl","sr2","slr","sm","ss","sml","ssl"])live[k]*=d;
+    const M=new Float32Array(n),S=new Float32Array(n);
+    for(let i=0;i<n;i++){live.sl+=L[i]*L[i];live.sr2+=R[i]*R[i];live.slr+=L[i]*R[i];M[i]=(L[i]+R[i])/2;S[i]=(L[i]-R[i])/2;live.sm+=M[i]*M[i];live.ss+=S[i]*S[i]}
+    const Ml=chain(lp[0],M),Sl=chain(lp[1],S);for(let i=0;i<n;i++){live.sml+=Ml[i]*Ml[i];live.ssl+=Sl[i]*Sl[i]}
+    live.secs+=n/sr};
+  Object.assign(live,{ctx,stream,proc,an,sr});
+  $("live-dot").classList.add("on");$("live-status").textContent=`Listening · ${stream.getAudioTracks()[0].label} · ${sr} Hz`;
+  $("live-start").textContent="Stop";$("live-reset").disabled=false;$("live-copy").disabled=false;
+  const freq=new Float32Array(an.frequencyBinCount);
+  const draw=()=>{an.getFloatFrequencyData(freq);const pw=new Float64Array(freq.length);let loud=false;
+    for(let k=0;k<freq.length;k++){pw[k]=10**(freq[k]/10);if(freq[k]>-90)loud=true}
+    if(loud){const b=bandsFromPower(pw,sr/an.fftSize,sr);
+      if(!live.bandsAvg)live.bandsAvg=b;else for(const k in b)live.bandsAvg[k]=live.bandsAvg[k]*0.9+b[k]*0.1}
+    renderLiveMeters();live.raf=requestAnimationFrame(draw)};
+  live.raf=requestAnimationFrame(draw);
+  live.timer=setInterval(renderLiveSuggestions,2000);renderLiveTone();live.toneTimer=setInterval(renderLiveTone,250)}
+function stopLive(){if(live.raf)cancelAnimationFrame(live.raf);clearInterval(live.timer);clearInterval(live.toneTimer);
+  if(live.proc)live.proc.disconnect();if(live.stream)live.stream.getTracks().forEach(t=>t.stop());if(live.ctx)live.ctx.close();
+  Object.assign(live,{ctx:null,stream:null,proc:null,raf:null});$("live-dot").classList.remove("on");$("live-status").textContent="Not listening";$("live-start").textContent="Start listening"}
+function lkOf(arr){const m=arr.reduce((a,v)=>a+v,0)/Math.max(1,arr.length);return -0.691+10*Math.log10(Math.max(m,1e-12))}
+function liveSnapshot(){const z=live.z||[];const M=z.length>=4?lkOf(z.slice(-4)):null,S=z.length>=30?lkOf(z.slice(-30)):null;
+  const I=live.b400&&live.b400.length?gatedIntegrated(live.b400):null;
+  const corr=live.sl>0&&live.sr2>0?live.slr/Math.sqrt(live.sl*live.sr2):1;
+  return {M,S,I,tp:dB(live.tpMax),tpNow:dB(live.peakWin),corr,width:dB(Math.sqrt(live.ss))-dB(Math.sqrt(live.sm)),lowWidth:dB(Math.sqrt(live.ssl))-dB(Math.sqrt(live.sml))}}
+function renderLiveMeters(){const s=liveSnapshot();const f=v=>v==null||v<-69?"–":r1(v);
+  const bar=v=>`<div class="meterbar"><div style="width:${v==null?0:Math.max(0,Math.min(100,(v+40)/40*100))}%"></div></div>`;
+  $("live-stats").innerHTML=`<div class="stat"><div class="k">Momentary (0.4 s)</div><div class="v">${f(s.M)}<span class="u">LUFS</span></div>${bar(s.M)}</div>`
+   +`<div class="stat"><div class="k">Short-term (3 s)</div><div class="v">${f(s.S)}<span class="u">LUFS</span></div>${bar(s.S)}</div>`
+   +statHTML("Integrated (since start)",f(s.I),"LUFS",`${Math.round(live.secs)} s measured`)
+   +statHTML("True peak (max)",live.tpMax?r1(s.tp):"–","dBTP",`Now ${live.peakWin?r1(s.tpNow):"–"}`)
+   +statHTML("Punch (PLR)",s.I!=null&&live.tpMax?r1(s.tp-s.I):"–","dB","<8 squashed · 9–14 healthy")
+   +statHTML("Correlation",live.sl?Math.round(s.corr*100)/100:"–","","1 mono · <0 trouble")}
+function renderLiveTone(){const ref=lastRef?lastRef.tone_vs_mids_db:null;const you=live.bandsAvg||Object.fromEntries(BANDS.map(([b])=>[b,0]));
+  renderTone($("live-tone"),$("live-legend"),Object.fromEntries(Object.entries(you).map(([k,v])=>[k,r1(v)])),ref,ref?null:GENRE_TONE[$("genre").value])}
+function liveAnalysis(){const s=liveSnapshot();if(!live.bandsAvg||s.I==null)return null;
+  return {file:"Live from Logic",sample_rate:live.sr,duration_s:Math.round(live.secs),
+    loudness:{integrated_lufs:r1(s.I),true_peak_dbtp:r1(s.tp),plr_db:r1(s.tp-s.I),loudness_range_lu:"n/a",max_short_term_lufs:s.S!=null?r1(s.S):null,clipped_samples:live.clip},
+    tone_vs_mids_db:Object.fromEntries(Object.entries(live.bandsAvg).map(([k,v])=>[k,r1(v)])),
+    stereo:{mono_file:false,correlation:Math.round(s.corr*100)/100,side_vs_mid_db:r1(s.width),low_end_side_vs_mid_db:r1(s.lowWidth)}}}
+function renderLiveSuggestions(){const a=liveAnalysis();if(!a){$("live-sug").innerHTML='<li><span></span><span class="muted">Waiting for audio… press play in Logic.</span></li>';return}
+  $("live-sug").innerHTML=sugHTML(suggest(a,$("genre").value,lastRef,true))}
+$("live-start").addEventListener("click",async()=>{if(live.ctx){stopLive();return}
+  try{await startLive()}catch(e){console.error(e);$("live-status").textContent=e.name==="NotAllowedError"?"Access was blocked. Open the downloaded file in Chrome and allow audio input.":"Couldn't open an audio input here ("+e.name+"). See setup above."}});
+$("live-device").addEventListener("change",e=>{startLive(e.target.value).catch(err=>$("live-status").textContent="Couldn't switch input: "+err.name)});
+$("live-reset").addEventListener("click",()=>{live.b400=[];live.tpMax=0;live.clip=0;live.secs=0});
+$("live-copy").addEventListener("click",async()=>{const a=liveAnalysis();if(!a)return;
+  try{await navigator.clipboard.writeText(reportMd(a,suggest(a,$("genre").value,lastRef,true),$("genre").value,lastRef));$("live-copied").textContent="Copied."}catch(e){$("live-copied").textContent="Copy blocked."}});
+
+/* ================================================================ TABS */
+function show(which){const live_=which==="live";$("tab-file").setAttribute("aria-selected",!live_);$("tab-live").setAttribute("aria-selected",live_);
+  $("view-file").classList.toggle("hidden",live_);$("view-live").classList.toggle("hidden",!live_);
+  if(live_){liveEnvNote();renderLiveTone();renderLiveMeters()}else if(lastMix)renderFile();
+  try{history.replaceState(null,"",live_?"#live":"#analyze")}catch(e){}}
+$("tab-file").onclick=()=>show("file");$("tab-live").onclick=()=>show("live");
+resetLive();show(location.hash==="#live"?"live":"file");
+
+/* test hook for automated checks */
+window.__mixdoctor={analyzeBuffer,suggest};
+</script>
+</body>
+</html>
