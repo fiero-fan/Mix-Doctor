@@ -27,6 +27,12 @@ Sessions (target, takes, pages) live in `sessions/`, which git ignores.
 
 Full-song references (YouTube targets by default) are judged on the guitar range only, 150 Hz–8 kHz; low end, fizz and width are skipped and the page says so. Take and target always use the same mode.
 
+## Ableton Live (trial, Live 12 Suite features)
+- Sets live in `~/AI/Ableton 2026/` (e.g. `project vibe coding Project/`). `.als` files are gzipped XML: read them to see saved tracks, routing and devices.
+- `tools/ableton_rack.py rocket` writes Audio Effect Racks (.adg) into `~/Music/Ableton/User Library/Presets/Audio Effects/Audio Effect Rack/Mix Doctor/`, built from Live's factory presets.
+- Live control: ableton-mcp (reviewed, pinned clone in `~/AI/ableton-mcp`, telemetry and dataset off) via `.mcp.json` (not committed). Remote Script in `User Library/Remote Scripts/AbletonMCP`; select AbletonMCP as Control Surface in Live. `tools/live.py` talks to it directly (port 9877).
+- Live's log: `~/Library/Preferences/Ableton/Live 12.4.15/Log.txt` (load errors, script messages).
+
 ## The user's rig ("My guitar · Heavenly Tweed", = SEED)
 - Guitar (Input 1): Noise Gate → Amp Designer → Channel EQ → Compressor → Stereo Delay; send Bus 7; out Bus 5
 - Mod FX (Bus 7): Modulation Delay → Flanger → Phaser; out Bus 5
