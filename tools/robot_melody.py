@@ -107,6 +107,11 @@ def main():
         if not uri:
             raise SystemExit(f"Synth preset not found: {a.synth}")
         call("load_browser_item", track_index=t, item_uri=uri)
+        # a clean carrier makes a clear robot melody: oscillators in tune, no filter drive
+        params = {q["name"]: q["index"] for q in call("get_device_parameters", track_index=t, device_index=0)["result"]["device"]["parameters"]}
+        for name, value in (("Osc 1 Detune", 0.5), ("Osc 2 Detune", 0.5), ("Flt 1 Drive", 0.0)):
+            if name in params:
+                call("set_device_parameter", track_index=t, device_index=0, parameter_index=params[name], value=value)
     slots = call("get_track_info", track_index=t)["result"]["clip_slots"]
     slot = next((s["index"] for s in slots if not s["has_clip"]), len(slots))
     call("create_clip", track_index=t, clip_index=slot, length=beats)

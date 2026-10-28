@@ -267,7 +267,9 @@ ROBOT_ME = {
 # After loading: pick the carrier source (Robot Carrier) in the Vocoder; Live can't store it.
 DAFT_ROBOT = {
     "name": "Daft Robot",
-    "macros": [("Robot", 108), ("Words", 102), ("Octave Up", 57), ("Space", 25),
+    # Cleaned after "too distorted, melody unclear": no Enhance, less consonant noise, narrower
+    # bands, quieter double, almost no raw voice. Melody tone strength went from 4 to 10 dB.
+    "macros": [("Robot", 121), ("Words", 64), ("Octave Up", 38), ("Space", 25),
                ("Gate", 70), ("Formant", 64)],
     "chains": [
         {"name": "Daft robot", "devices": [
@@ -275,7 +277,7 @@ DAFT_ROBOT = {
              "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 100, "Gain": 0}},
             {"preset": "Vocoder/Chromatic", "label": "Synth sings, you talk",
              "set": {"CarrierSource/Type": 1, "LowFrequency": 80, "HighFrequency": 12000,
-                     "FilterBandWidth": 1.0, "Retro": False, "CarrierFlatten": True, "OutputGain": 3,
+                     "FilterBandWidth": 0.5, "Retro": False, "CarrierFlatten": False, "OutputGain": 0,
                      "EnvelopeRelease": 63, "UvdThreshold": 0.85, "MonoStereo": 1, "ModulatorAmount": 1},
              "macros": {"DryWet": (0, 0, 1), "UvdLevel": (1, 0, 1), "LevelGate": (4, -60, -20),
                         "FormantShift": (5, -12, 12)}},

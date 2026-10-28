@@ -36,6 +36,16 @@ Full-song references (YouTube targets by default) are judged on the guitar range
 - Rack pitfalls already fixed in the builder: devices need `Id`; the shell's chain-select zones faded in; the shell mapped chain volume to macro 8 (silenced everything). Leave macro mappings only on what we set.
 - Shifter's envelope pitch is level-sensitive: hotter input needs less Climb, or pitch parks low and growls. Tune by recording BlackHole and turning macros via `tools/live.py`. The bridge only reaches top-level devices, so put anything we may tune on a macro.
 - Live's audio output must be "Main Output" for BlackHole to hear it (a restart once switched it to the headphones).
+- Measure one track at a time: nothing is soloed by default, so pause the other clips (stop_clip, record, fire_clip) or the beat pollutes the numbers.
+
+## Recipes the user loved
+- **Lo-fi beat:** `python3 tools/lofi_beat.py --chords Am,Gm` (65 BPM, Boom Bap Kit + E-Piano MKI Mellow + Upright Close Bass, swung). New loops go in the next free clip slot. The user keeps the first 4-bar drum loop and only swaps chords.
+- **Daft Punk robot voice:**
+  1. `python3 tools/robot_melody.py "<voice .wav>" --voice-track voce` transcribes the sung clip into a "Robot Carrier" MIDI track (clean saw, detune and drive off).
+  2. Load the **Daft Robot** rack on the voice track, then in its Vocoder set Carrier = External, source Robot Carrier; set Robot Carrier's Audio To = Sends Only.
+  3. Macros: Robot, Words (consonants), Octave Up (+12 double), Space, Gate, Formant.
+  Clarity came from a clean carrier (no detune or drive) and narrow bands, not from more Enhance or level. The carrier type number for External (1) in the rack file is a guess until checked in a saved set.
+- Auto pitch-tracked robot (Robot Me) works but sounds more like the user's own voice. The keyboard-carrier vocoder is the keeper.
 
 ## The user's rig ("My guitar · Heavenly Tweed", = SEED)
 - Guitar (Input 1): Noise Gate → Amp Designer → Channel EQ → Compressor → Stereo Delay; send Bus 7; out Bus 5
