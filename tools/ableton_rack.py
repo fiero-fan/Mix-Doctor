@@ -260,7 +260,36 @@ ROBOT_ME = {
         ]},
     ],
 }
-RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME}
+# Daft Punk-style robot for the voice track: the Vocoder's carrier is an External synth track
+# ("Robot Carrier", made by tools/robot_melody.py) playing the melody, so the robot is exactly
+# in tune and the voice only supplies the words. Values copied from the version the user loved
+# (set through the bridge; Live shows release and band edges as log10 of ms / Hz).
+# After loading: pick the carrier source (Robot Carrier) in the Vocoder; Live can't store it.
+DAFT_ROBOT = {
+    "name": "Daft Robot",
+    "macros": [("Robot", 108), ("Words", 102), ("Octave Up", 57), ("Space", 25),
+               ("Gate", 70), ("Formant", 64)],
+    "chains": [
+        {"name": "Daft robot", "devices": [
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Even voice",
+             "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 100, "Gain": 0}},
+            {"preset": "Vocoder/Chromatic", "label": "Synth sings, you talk",
+             "set": {"CarrierSource/Type": 1, "LowFrequency": 80, "HighFrequency": 12000,
+                     "FilterBandWidth": 1.0, "Retro": False, "CarrierFlatten": True, "OutputGain": 3,
+                     "EnvelopeRelease": 63, "UvdThreshold": 0.85, "MonoStereo": 1, "ModulatorAmount": 1},
+             "macros": {"DryWet": (0, 0, 1), "UvdLevel": (1, 0, 1), "LevelGate": (4, -60, -20),
+                        "FormantShift": (5, -12, 12)}},
+            {"preset": "Shifter/Wobbly Octave Down", "label": "Octave-up double",
+             "set": {"Global_ShifterMode": 0, "Pitch_Coarse": 12, "Pitch_Fine": 0, "Lfo_Amount": 0,
+                     "Lfo_AmountPitch": 0, "Lfo_SpinOn": False, "Delay_On": False, "Global_Wide": True},
+             "macros": {"Global_DryWet": (2, 0, 1)}},
+            {"preset": "Hybrid Reverb/Room/Modest Corner", "label": "Room",
+             "macros": {"DryWet": (3, 0, 0.5)}},
+        ]},
+    ],
+}
+RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
+         "daft-robot": DAFT_ROBOT}
 
 
 def main():
