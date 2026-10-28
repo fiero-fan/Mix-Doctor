@@ -87,6 +87,7 @@ def build(spec, out):
             dps.remove(d)
         for di, d in enumerate(chain["devices"]):
             dev = load_device(d["preset"])
+            dev.set("Id", "0")  # .adv files leave it out, but inside a rack every list member needs one
             dev.find("UserName").set("Value", d.get("label", ""))
             for k, v in d.get("set", {}).items():
                 set_param(dev, k, v)
