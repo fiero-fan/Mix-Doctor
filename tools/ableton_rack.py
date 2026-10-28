@@ -158,8 +158,10 @@ ROCKET = {
 # Auto Filter's negative envelope closes on the attack and sweeps open as the note rings.
 ROCKET_NOTES = {
     "name": "Rocket Notes",
-    "macros": [("Guitar", 108), ("Rocket", 100), ("Climb", 90), ("Whoosh", 100),
-               ("Roar", 50), ("Sky", 50), ("Gate", 40), ("Height", 64)],
+    # Tuned by ear-and-analysis on the user's guitar at a healthy input level (peaks ~-8 dB).
+    # Climb is level-sensitive: hotter input needs less Climb, or the pitch parks low and growls.
+    "macros": [("Guitar", 98), ("Rocket", 90), ("Climb", 25), ("Whoosh", 100),
+               ("Roar", 20), ("Sky", 38), ("Gate", 55), ("Height", 64)],
     "chains": [
         {"name": "Guitar", "volume_macro": 0, "devices": []},
         {"name": "Rocket", "volume_macro": 1, "devices": [
