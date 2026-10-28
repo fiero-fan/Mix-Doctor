@@ -78,6 +78,44 @@ details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin
 @keyframes p{50%{opacity:.35}}
 .meterbar{height:8px;background:var(--surface-2);border-radius:4px;overflow:hidden;margin-top:6px}
 .meterbar > div{height:100%;background:var(--series-1);width:0;transition:width .1s}
+/* ---------- Sound design ---------- */
+.sd-presets{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary);border-radius:999px;padding:7px 14px;font:inherit;font-size:14px;cursor:pointer}
+.chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.sd-head h2{font-size:22px;margin:0}
+.sd-head p{margin:2px 0 0;color:var(--text-secondary)}
+.tips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tips span{background:var(--surface-2);border-radius:999px;padding:4px 11px;font-size:13px;color:var(--text-secondary)}
+.sd-grid{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;margin-top:16px}
+@media (max-width:760px){.sd-grid{grid-template-columns:1fr}}
+.mixer{display:flex;gap:10px;background:#1d1d1f;border-radius:14px;padding:12px;width:fit-content;max-width:100%;overflow-x:auto}
+.strip{width:168px;flex:0 0 168px;background:#2a2a2d;border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px}
+.strip .lbl{font-size:11px;color:#a1a1a6;text-transform:uppercase;letter-spacing:.06em;margin:2px 2px 0}
+.strip .nm{color:#f5f5f7;font-weight:600;font-size:14px;text-align:center;padding:6px 0 2px;border-top:1px solid #3a3a3d;margin-top:4px}
+.slot{display:flex;align-items:center;gap:7px;border:0;border-radius:6px;padding:7px 8px;background:#3a3a3e;color:#f5f5f7;font:inherit;font-size:13px;text-align:left;cursor:pointer;position:relative}
+.slot:hover{background:#46464b}
+.slot[aria-pressed=true]{outline:2px solid #fff;outline-offset:1px}
+.slot i{width:6px;align-self:stretch;border-radius:3px;flex:0 0 6px}
+.slot small{display:block;color:#a1a1a6;font-size:11px}
+.slot.empty{background:transparent;border:1px dashed #3a3a3d;color:#6e6e73;cursor:default;font-size:12px}
+.send{display:flex;justify-content:space-between;background:#323236;border-radius:6px;padding:5px 8px;color:#d1d1d6;font-size:12px}
+.flow{color:#6e6e73;font-size:11px;text-align:center}
+.fader{height:70px;display:flex;justify-content:center;align-items:flex-end;margin-top:4px}
+.fader div{width:6px;height:100%;background:#1d1d1f;border-radius:3px;position:relative}
+.fader div::after{content:"";position:absolute;left:-9px;width:24px;height:12px;border-radius:3px;background:#c7c7cc;bottom:62%}
+.detail{min-height:260px}
+.detail h3{margin:0;font-size:19px;display:flex;align-items:center;gap:8px}
+.detail h3 i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.detail .role{color:var(--text-secondary);margin:2px 0 12px}
+.knobs{display:flex;gap:14px;flex-wrap:wrap}
+.knob{width:92px;text-align:center}
+.knob svg{display:block;margin:0 auto}
+.knob .kv{font-weight:650;font-size:14px;font-variant-numeric:tabular-nums}
+.knob .kl{font-size:12px;color:var(--text-muted)}
+.extra{margin-top:12px;font-size:13px;color:var(--text-secondary);background:var(--surface-2);border-radius:8px;padding:8px 10px}
+.stepnav{display:flex;gap:8px;margin-top:14px}
+textarea{width:100%;min-height:110px;font:13px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-1);color:var(--text-primary)}
+input.txt{font:inherit;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary);flex:1;min-width:220px}
 </style>
 </head>
 <body>
@@ -87,10 +125,11 @@ details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin
 <div class="tabs" role="tablist">
   <button class="tab" role="tab" id="tab-file" aria-selected="true">Analyze a bounce</button>
   <button class="tab" role="tab" id="tab-live" aria-selected="false">Live from Logic (BlackHole)</button>
+  <button class="tab" role="tab" id="tab-sound" aria-selected="false">Sound design</button>
 </div>
 
 <!-- ============ shared settings ============ -->
-<div class="row" style="margin-bottom:14px">
+<div class="row" style="margin-bottom:14px" id="genre-row">
   <label class="muted">Genre profile
     <select id="genre">
       <option>rock</option><option>funk</option><option>ska</option><option>reggae</option><option>disco</option><option>electronic</option>
@@ -150,6 +189,25 @@ details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin
     <p class="muted">Tip: load a reference track in the other tab first, and its curve appears here too.</p></div>
   <div class="card"><h2>What to try now <span class="muted">· whole session since Start, silence ignored · updates every 2 s</span></h2><ol class="sug" id="live-sug"><li><span></span><span class="muted">Start listening and play your project.</span></li></ol>
     <div class="row" style="margin-top:12px"><button class="btn" id="live-copy" disabled>Copy snapshot for Claude</button><span class="muted" id="live-copied"></span></div></div>
+</section>
+
+<!-- ============ SOUND DESIGN ============ -->
+<section id="view-sound" class="hidden">
+  <div class="sd-presets" id="sd-presets"></div>
+  <div class="card">
+    <div class="sd-head"><h2 id="sd-title"></h2><p id="sd-sub"></p><div class="tips" id="sd-tips"></div></div>
+    <div class="sd-grid">
+      <div><div class="mixer" id="sd-mixer"></div><p class="muted" style="margin:8px 2px 0">Top to bottom = signal order. Click a slot.</p></div>
+      <div class="detail" id="sd-detail"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Want a different sound?</h2>
+    <div class="row"><input class="txt" id="sd-ask" placeholder="e.g. Nile Rodgers funk rhythm guitar, The Edge dotted-eighth delay…"><button class="btn primary" id="sd-copyask">Copy request for Claude</button></div>
+    <p class="muted" style="margin:8px 0">Paste the request into Claude, then paste Claude's answer here:</p>
+    <textarea id="sd-paste" placeholder="Paste Claude's answer (the part in curly braces)"></textarea>
+    <div class="row" style="margin-top:8px"><button class="btn" id="sd-load">Show this sound</button><span class="muted" id="sd-msg"></span></div>
+  </div>
 </section>
 </div>
 
@@ -481,13 +539,77 @@ $("live-reset").addEventListener("click",()=>{const keep={ctx:live.ctx,stream:li
 $("live-copy").addEventListener("click",async()=>{const a=liveAnalysis();if(!a)return;
   try{await navigator.clipboard.writeText(reportMd(a,suggest(a,$("genre").value,lastRef,true),$("genre").value,lastRef));$("live-copied").textContent="Copied."}catch(e){$("live-copied").textContent="Copy blocked."}});
 
+/* ============================================================ SOUND DESIGN */
+// Plugin colour by job (labels always shown, so colour never carries meaning alone)
+const KIND={dynamics:["#2a78d6","Dynamics"],drive:["#eb6834","Drive"],amp:["#eda100","Amp"],eq:["#1baf7a","EQ"],
+  modulation:["#e87ba4","Modulation"],delay:["#6250d6","Delay"],reverb:["#9085e9","Reverb"],utility:["#8e8e93","Utility"]};
+const PRESETS=[
+ {id:"gilmour",name:"David Gilmour lead",sub:"Long singing sustain, smooth fuzz, big echo. Think Comfortably Numb solo.",
+  tips:["Neck or middle pickup","Slow, wide bends","Let notes ring into the echo"],
+  strips:[
+   {name:"Guitar",slots:[
+    {plugin:"Compressor",kind:"dynamics",role:"Sustain: notes sing longer",knobs:[["Ratio","4:1",.45],["Attack","20 ms",.35],["Release","200 ms",.5],["Reduction","≈6 dB",.5]],extra:"Circuit type: Vintage VCA"},
+    {plugin:"Pedalboard: Fuzz Machine",kind:"drive",role:"Big Muff-style fuzz",knobs:[["Fuzz","5",.5],["Tone","4",.4],["Level","6",.6]],extra:"Too buzzy? Lower Fuzz, not Tone."},
+    {plugin:"Amp Designer",kind:"amp",role:"Loud clean amp (his Hiwatt)",knobs:[["Gain","3",.3],["Bass","5",.5],["Mids","6.5",.65],["Treble","6",.6],["Presence","5",.5]],extra:"Model: a British clean amp · Cab: 4×12 · Mic: dynamic, centre"},
+    {plugin:"Channel EQ",kind:"eq",role:"Fits it in the mix",knobs:[["Low cut","100 Hz",.25],["3 kHz","−2 dB",.4],["High cut","8 kHz",.7]]},
+    {plugin:"Tape Delay",kind:"delay",role:"The echo behind every note",knobs:[["Time","≈440 ms",.45],["Feedback","30%",.3],["Mix","25%",.25],["High cut","3 kHz",.35]],extra:"Or sync to a dotted ⅛ of your tempo"}],
+    sends:[["Bus 1 → Reverb","−10 dB"]]},
+   {name:"Aux 1 · Reverb",slots:[
+    {plugin:"ChromaVerb",kind:"reverb",role:"Big hall around the solo",knobs:[["Room","Hall",.7],["Decay","3 s",.6],["Pre-delay","40 ms",.3],["Mix","100% wet",1]]}]}
+  ]}
+];
+let sdUser=[];try{sdUser=JSON.parse(localStorage.getItem("mixdoctor.sounds")||"[]")}catch(e){}
+let sdCur=null,sdSel=[0,0];
+const sdAll=()=>[...PRESETS,...sdUser];
+function knobSVG(p){const a0=-225,a1=45,a=a0+(a1-a0)*Math.max(0,Math.min(1,p)),r=30,c=38;
+  const pt=d=>[c+r*Math.cos(d*Math.PI/180),c+r*Math.sin(d*Math.PI/180)];
+  const arc=(s,e)=>{const [x0,y0]=pt(s),[x1,y1]=pt(e);return `M${x0.toFixed(1)},${y0.toFixed(1)}A${r},${r} 0 ${e-s>180?1:0} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`};
+  const [hx,hy]=[c+20*Math.cos(a*Math.PI/180),c+20*Math.sin(a*Math.PI/180)];
+  return `<svg width="76" height="70" viewBox="0 0 76 70" aria-hidden="true"><path d="${arc(a0,a1)}" stroke="${css('--line')}" stroke-width="6" fill="none" stroke-linecap="round"/>
+   ${p>0.005?`<path d="${arc(a0,a)}" stroke="${css('--accent')}" stroke-width="6" fill="none" stroke-linecap="round"/>`:""}
+   <circle cx="${c}" cy="${c}" r="17" fill="${css('--surface-2')}" stroke="${css('--line')}"/><line x1="${c}" y1="${c}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${css('--text-primary')}" stroke-width="3" stroke-linecap="round"/></svg>`}
+function renderSoundPresets(){$("sd-presets").innerHTML=sdAll().map(p=>`<button class="chip" data-id="${esc(p.id)}" aria-pressed="${sdCur&&p.id===sdCur.id}">${esc(p.name)}</button>`).join("");
+  $("sd-presets").querySelectorAll(".chip").forEach(b=>b.onclick=()=>openSound(b.dataset.id))}
+function openSound(id){sdCur=sdAll().find(p=>p.id===id)||PRESETS[0];sdSel=[0,0];renderSoundPresets();
+  $("sd-title").textContent=sdCur.name;$("sd-sub").textContent=sdCur.sub||"";
+  $("sd-tips").innerHTML=(sdCur.tips||[]).map(t=>`<span>${esc(t)}</span>`).join("");renderMixer();renderSlot()}
+function renderMixer(){$("sd-mixer").innerHTML=sdCur.strips.map((s,si)=>`<div class="strip"><div class="lbl">Audio FX</div>`+
+   s.slots.map((sl,i)=>{const k=KIND[sl.kind]||KIND.utility;return `<button class="slot" data-s="${si}" data-i="${i}" aria-pressed="${sdSel[0]===si&&sdSel[1]===i}"><i style="background:${k[0]}"></i><span>${esc(sl.plugin)}<small>${esc(k[1])}</small></span></button>`}).join("")+
+   `<div class="slot empty">+ empty slot</div>`+
+   ((s.sends||[]).length?`<div class="lbl">Sends</div>`+s.sends.map(x=>`<div class="send"><span>${esc(x[0])}</span><span>${esc(x[1])}</span></div>`).join(""):"")+
+   `<div class="fader"><div></div></div><div class="nm">${esc(s.name)}</div></div>`).join("");
+  $("sd-mixer").querySelectorAll(".slot[data-s]").forEach(b=>b.onclick=()=>{sdSel=[+b.dataset.s,+b.dataset.i];renderMixer();renderSlot()})}
+function flatSlots(){const out=[];sdCur.strips.forEach((s,si)=>s.slots.forEach((_,i)=>out.push([si,i])));return out}
+function renderSlot(){const s=sdCur.strips[sdSel[0]],sl=s.slots[sdSel[1]],k=KIND[sl.kind]||KIND.utility;
+  const all=flatSlots(),pos=all.findIndex(x=>x[0]===sdSel[0]&&x[1]===sdSel[1]);
+  $("sd-detail").innerHTML=`<div class="muted">${esc(s.name)} · slot ${sdSel[1]+1} of ${s.slots.length}</div>
+   <h3><i style="background:${k[0]}"></i>${esc(sl.plugin)}</h3><div class="role">${esc(sl.role||"")}</div>
+   <div class="knobs">${(sl.knobs||[]).map(([l,v,p])=>`<div class="knob">${knobSVG(+p||0)}<div class="kv">${esc(v)}</div><div class="kl">${esc(l)}</div></div>`).join("")}</div>
+   ${sl.extra?`<div class="extra">${esc(sl.extra)}</div>`:""}
+   <div class="stepnav"><button class="btn" id="sd-prev" ${pos<=0?"disabled":""}>← Previous</button><button class="btn" id="sd-next" ${pos>=all.length-1?"disabled":""}>Next →</button></div>`;
+  const go=d=>{sdSel=all[pos+d];renderMixer();renderSlot()};
+  $("sd-prev").onclick=()=>go(-1);$("sd-next").onclick=()=>go(1)}
+const SD_FORMAT=`{"name":"Short name","sub":"One sentence on how it sounds","tips":["max 3 short playing tips"],
+ "strips":[{"name":"Guitar","slots":[{"plugin":"Logic stock plugin name","kind":"dynamics|drive|amp|eq|modulation|delay|reverb|utility","role":"max 6 words","knobs":[["Knob label","value with unit",0.5]],"extra":"optional one short line"}],"sends":[["Bus 1 → Reverb","-10 dB"]]},
+ {"name":"Aux 1 · Reverb","slots":[...]}]}`;
+$("sd-copyask").onclick=async()=>{const want=$("sd-ask").value.trim()||"[describe the sound]";
+  const txt=`Design this sound for me in Logic Pro using only Logic's stock plugins: ${want}.\nReply with ONLY a JSON object in this exact format (knob number = knob position from 0 to 1; 2–5 knobs per plugin; keep all text very short):\n${SD_FORMAT}`;
+  try{await navigator.clipboard.writeText(txt);$("sd-msg").textContent="Request copied. Paste it into Claude."}catch(e){$("sd-msg").textContent="Copy blocked. Select the text box and copy manually."}};
+$("sd-load").onclick=()=>{const raw=$("sd-paste").value;const a=raw.indexOf("{"),b=raw.lastIndexOf("}");
+  try{const p=JSON.parse(raw.slice(a,b+1));if(!p.strips||!p.strips.length||!p.strips[0].slots||!p.strips[0].slots.length)throw 0;
+    p.id="u"+Date.now();p.name=p.name||"My sound";sdUser.push(p);try{localStorage.setItem("mixdoctor.sounds",JSON.stringify(sdUser))}catch(e){}
+    openSound(p.id);$("sd-msg").textContent="Added to your sounds.";window.scrollTo({top:0,behavior:"smooth"})}
+  catch(e){$("sd-msg").textContent="That doesn't look like a sound from Claude. Paste the whole answer, including { and }."}};
+
 /* ================================================================ TABS */
-function show(which){const live_=which==="live";$("tab-file").setAttribute("aria-selected",!live_);$("tab-live").setAttribute("aria-selected",live_);
-  $("view-file").classList.toggle("hidden",live_);$("view-live").classList.toggle("hidden",!live_);
-  if(live_){liveEnvNote();renderLiveTone();renderLiveMeters()}else if(lastMix)renderFile();
-  try{history.replaceState(null,"",live_?"#live":"#analyze")}catch(e){}}
-$("tab-file").onclick=()=>show("file");$("tab-live").onclick=()=>show("live");
-resetLive();show(location.hash==="#live"?"live":"file");
+function show(which){const v={file:"view-file",live:"view-live",sound:"view-sound"};
+  for(const k in v){$(v[k]).classList.toggle("hidden",k!==which);$("tab-"+k).setAttribute("aria-selected",k===which)}
+  $("genre-row").classList.toggle("hidden",which==="sound");
+  if(which==="live"){liveEnvNote();renderLiveTone();renderLiveMeters()}else if(which==="file"&&lastMix)renderFile();
+  else if(which==="sound"&&!sdCur)openSound("gilmour");
+  try{history.replaceState(null,"",{file:"#analyze",live:"#live",sound:"#sound"}[which])}catch(e){}}
+$("tab-file").onclick=()=>show("file");$("tab-live").onclick=()=>show("live");$("tab-sound").onclick=()=>show("sound");
+resetLive();show(location.hash==="#live"?"live":location.hash==="#sound"?"sound":"file");
 
 /* test hook for automated checks */
 window.__mixdoctor={analyzeBuffer,suggest};
