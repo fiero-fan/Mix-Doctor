@@ -190,8 +190,8 @@ ROCKET_NOTES = {
 # rocket itself, so there is no clean "source" with an effect "shadow" beside it.
 ROCKET_BLEND = {
     "name": "Rocket Blend",
-    "macros": [("Blend", 75), ("Climb", 25), ("Height", 64), ("Whoosh", 80),
-               ("Roar", 50), ("Sky", 35), ("Gate", 35), ("Trail", 28)],
+    "macros": [("Blend", 108), ("Climb", 25), ("Height", 64), ("Whoosh", 100),
+               ("Roar", 68), ("Sky", 35), ("Gate", 35), ("Trail", 28)],
     "chains": [
         {"name": "Rocket guitar", "devices": [
             {"preset": "Gate/Soft Reducer", "label": "Quiet between notes",
