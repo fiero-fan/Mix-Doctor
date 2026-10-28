@@ -30,7 +30,7 @@ button{font:inherit}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 .btn.rec{background:#e34948;border-color:#e34948;color:#fff;font-weight:600}
 .btn:disabled{opacity:.5;cursor:default}
-select,input.txt{font:inherit;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary)}
+select,input.txt{max-width:100%;font:inherit;padding:7px 10px;border-radius:9px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary)}
 .muted{color:var(--text-muted);font-size:13px}
 .hidden{display:none!important}
 /* header */
@@ -134,6 +134,12 @@ svg text{fill:var(--text-secondary);font-size:11px}
 .knob .go{position:absolute;top:2px;right:4px;background:var(--hot);color:#fff;border-radius:6px;font-size:12px;font-weight:700;padding:0 5px}
 .extra{margin-top:10px;font-size:13px;color:var(--text-secondary);background:var(--surface-2);border-radius:8px;padding:7px 10px}
 .chk{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+#yt-box details summary{font-size:14px;color:var(--text-primary);font-weight:600;margin-top:12px}
+.yt{position:relative;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#000;margin-top:10px}
+.yt iframe,.yt>div{position:absolute;inset:0;width:100%;height:100%}
+.snip{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:10px 0}
+.snip input{width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary);font-variant-numeric:tabular-nums}
+.btn.sm{padding:5px 9px;font-size:13px}
 details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin-top:14px}
 textarea{width:100%;min-height:90px;font:13px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-1);color:var(--text-primary);margin-top:6px}
 </style>
@@ -161,7 +167,16 @@ textarea{width:100%;min-height:90px;font:13px/1.4 ui-monospace,Menlo,monospace;b
 <div class="grid">
   <div>
     <!-- 1 TARGET -->
-    <div class="card" id="c-target"></div>
+    <div class="card" id="c-target"><div id="c-target-main"></div>
+      <div id="yt-box"><details id="yt-det" open><summary>Target from a YouTube clip</summary>
+        <div class="row" style="margin-top:8px"><input class="txt" id="yt-url" placeholder="Paste a YouTube link" style="flex:1;min-width:0"><button class="btn" id="yt-load">Load</button></div>
+        <div id="yt-wrap" class="hidden"><div class="yt"><div id="yt-player"></div></div>
+          <div class="snip"><span class="muted">Start</span><input id="yt-start" value="0:00" inputmode="numeric"><button class="btn sm" data-now="start">⏱ now</button>
+            <span class="muted">End</span><input id="yt-end" placeholder="0:20" inputmode="numeric"><button class="btn sm" data-now="end">⏱ now</button></div>
+          <div class="row"><button class="btn" id="yt-play">▶ Play snippet</button><button class="btn rec" id="yt-learn">● Learn this snippet</button></div>
+          <div class="muted" id="yt-msg" style="margin-top:6px"></div></div>
+        <div class="hint" id="yt-hint">Your Mac's sound output must be the <b>Multi-Output Device</b>, so BlackHole hears YouTube.</div>
+      </details></div></div>
     <!-- 2 YOU -->
     <div class="card" id="c-you"></div>
   </div>
@@ -389,16 +404,16 @@ async function connect(deviceId){
 function disconnect(){if(L.proc)L.proc.disconnect();if(L.stream)L.stream.getTracks().forEach(t=>t.stop());if(L.ctx)L.ctx.close();
   Object.assign(L,{ctx:null,stream:null,proc:null,cap:null});$("in-dot").classList.remove("on");$("in-name").textContent="Input not connected";$("in-btn").textContent="Connect";$("in-dev").classList.add("hidden")}
 function momentary(){if(L.z.length<4)return null;const m=(L.z.at(-1)+L.z.at(-2)+L.z.at(-3)+L.z.at(-4))/4;return -0.691+10*Math.log10(Math.max(m,1e-12))}
-async function startCapture(role){S.err[role]="";
+async function startCapture(role,secOverride,onDone){S.err[role]="";
   try{if(!L.ctx)await connect()}catch(e){S.err[role]=framed()?"This copy of the page can't use audio inputs. Open fiero-fan.github.io/Mix-Doctor in Chrome.":
     e.name==="NotAllowedError"?"Audio access was blocked. Allow it in Chrome (and in macOS Privacy › Microphone).":"Couldn't open an audio input ("+e.name+").";render();return}
-  const sec=+($("len-"+role)?.value||(S.ctx==="tone"?20:0));
-  L.cap={role,ctx:S.ctx,max:Math.round((sec||300)*L.sr),L:[],R:[],n:0,done:false,untilStop:!sec};render()}
-function finishCapture(){const c=L.cap;if(!c)return;L.cap=null;c.done=true;
+  const sec=secOverride||+($("len-"+role)?.value||(S.ctx==="tone"?20:0));
+  L.cap={role,ctx:S.ctx,max:Math.round((sec||300)*L.sr),L:[],R:[],n:0,done:false,untilStop:!sec,onDone};render();return true}
+function finishCapture(){const c=L.cap;if(!c)return;L.cap=null;c.done=true;if(c.onDone)try{c.onDone()}catch(e){}
   const n=c.n,Lf=new Float32Array(n),Rf=new Float32Array(n);let o=0;
   for(let j=0;j<c.L.length;j++){const a=c.L[j],b=c.R[j];for(let i=0;i<a.length&&o+i<n;i++){Lf[o+i]=a[i]/32768;Rf[o+i]=b[i]/32768}o+=a.length}
   S.busy[c.role]=true;render();
-  setTimeout(()=>{process(c.role,c.ctx,{sampleRate:L.sr||48000,numberOfChannels:2,getChannelData:i=>i?Rf:Lf},c.role==="target"?"Live target":"Live");S.busy[c.role]=false;render()},20)}
+  setTimeout(()=>{process(c.role,c.ctx,{sampleRate:L.sr||48000,numberOfChannels:2,getChannelData:i=>i?Rf:Lf},c.name||(c.role==="target"?"Live target":"Live"));if(c.role==="target"&&c.yt&&S[c.ctx].target)S[c.ctx].target.yt=c.yt;S.busy[c.role]=false;render()},20)}
 async function useFile(role,file){S.busy[role]=true;S.err[role]="";render();
   try{const ctx=new (window.AudioContext||window.webkitAudioContext)();const buf=await ctx.decodeAudioData(await file.arrayBuffer());ctx.close();
     process(role,S.ctx,buf,file.name.replace(/\.[^.]+$/,""))}catch(e){console.error(e);S.err[role]="Couldn't read that file. Try a WAV."}
@@ -425,7 +440,7 @@ function capUI(role){const c=L.cap&&L.cap.role===role;if(S.busy[role])return `<d
 function lenSelect(role,def){return `<select id="len-${role}" title="How long to listen">${[[15,"15 s"],[20,"20 s"],[30,"30 s"],[60,"1 min"],[0,"until I stop"]].map(([v,l])=>`<option value="${v}" ${v===def?"selected":""}>${l}</option>`).join("")}</select>`}
 function renderTarget(){const c=C(),t=c.target,capping=L.cap&&L.cap.role==="target",tone=S.ctx==="tone";
   const saved=S.saved.filter(s=>s.ctx===S.ctx);
-  $("c-target").innerHTML=`<h2><span class="n">1</span>Target</h2><p class="sub">${tone?"The sound you want. Play it from YouTube or a file.":"A released song to aim for, or a genre."}</p>
+  $("c-target-main").innerHTML=`<h2><span class="n">1</span>Target</h2><p class="sub">${tone?"The sound you want. Play it from YouTube or a file.":"A released song to aim for, or a genre."}</p>
    <div class="row">${capping?"":`<button class="btn rec" data-cap="target">● Learn from input</button>${lenSelect("target",tone?20:30)}`}
    <label class="btn">Use a file<input type="file" accept="audio/*" hidden data-file="target"></label></div>
    ${capUI("target")}
@@ -434,13 +449,13 @@ function renderTarget(){const c=C(),t=c.target,capping=L.cap&&L.cap.role==="targ
    ${S.err.target?`<div class="err">${esc(S.err.target)}</div>`:""}
    ${t?`<div class="got"><span style="color:var(--good);font-weight:700">✓</span><input id="t-name" value="${esc(t.name)}" aria-label="Target name">
      ${t.src!=="genre"&&!t.savedId?`<button class="btn" id="t-save">Save</button>`:""}<button class="btn" id="t-clear" title="Remove target">✕</button></div>`:""}
-   ${!t&&tone?`<div class="hint">YouTube: set your Mac's sound output to the Multi-Output Device, find a clip with the guitar on its own, press play, then Learn.</div>`:""}`;
-  bindCommon($("c-target"));
+`;
+  bindCommon($("c-target-main"));
   const g=$("t-genre");if(g)g.onchange=()=>{if(g.value){C().target=genreTarget(g.value);rescore();render()}};
-  const sv=$("t-saved");if(sv)sv.onchange=()=>{const s=S.saved.find(x=>x.id===sv.value);if(s){C().target={name:s.name,src:"saved",savedId:s.id,prof:s.prof,ana:s.ana};rescore();render()}};
+  const sv=$("t-saved");if(sv)sv.onchange=()=>{const s=S.saved.find(x=>x.id===sv.value);if(s){C().target={name:s.name,src:"saved",savedId:s.id,yt:s.yt,prof:s.prof,ana:s.ana};if(s.yt)ytOpen(s.yt.id,s.yt.start,s.yt.end);rescore();render()}};
   if(t){$("t-name").onchange=e=>{t.name=e.target.value;if(t.savedId){const s=S.saved.find(x=>x.id===t.savedId);if(s){s.name=t.name;store.set("md.targets",S.saved)}}render()};
     $("t-clear").onclick=()=>{C().target=null;render()};
-    const b=$("t-save");if(b)b.onclick=()=>{const id="t"+Date.now();S.saved.push({id,ctx:S.ctx,name:t.name,prof:t.prof,ana:{file:t.ana.file,loudness:t.ana.loudness,tone_vs_mids_db:t.ana.tone_vs_mids_db,stereo:t.ana.stereo}});t.savedId=id;store.set("md.targets",S.saved);render()}}}
+    const b=$("t-save");if(b)b.onclick=()=>{const id="t"+Date.now();S.saved.push({id,ctx:S.ctx,name:t.name,yt:t.yt||null,prof:t.prof,ana:{file:t.ana.file,loudness:t.ana.loudness,tone_vs_mids_db:t.ana.tone_vs_mids_db,stereo:t.ana.stereo}});t.savedId=id;store.set("md.targets",S.saved);render()}}}
 function renderYou(){const c=C(),tone=S.ctx==="tone",capping=L.cap&&L.cap.role==="you",has=c.takes.length>0;
   $("c-you").innerHTML=`<h2><span class="n">2</span>Your sound</h2><p class="sub">${tone?"Solo your guitar in Logic and play.":"Play your song in Logic, ideally from the top."}</p>
    <div class="row">${capping?"":`<button class="btn rec" data-cap="you">● ${has?"Listen again":"Listen to me"}</button>${lenSelect("you",tone?20:0)}`}
@@ -546,6 +561,41 @@ function claudeReport(rows,adv,take){const c=C(),ch=curChain();
     `Chain: ${ch.strips.map(s=>`${s.name}: ${s.slots.map(x=>x.plugin).join(" → ")}`).join(" | ")}`,
     `App advice: ${(adv||[]).map((a,i)=>`${i+1}) ${a.plugin} ${a.knob.split("|")[0]} ${a.dir} ${a.amt||""}`).join("; ")||"none"}`,"",
     "I'm a musician, not an engineer. In plain words and few lines, what should I change in Logic to get closer? (Screenshot of my plugins attached if I have one.)"].join("\n")}
+
+/* =============================================================== YOUTUBE */
+const YT_={player:null,ready:false,id:null,learning:false,watch:null,apiLoading:false};
+function ytId(u){u=(u||"").trim();let m=u.match(/(?:youtu\.be\/|v=|\/shorts\/|\/embed\/|\/live\/)([\w-]{11})/);if(m)return m[1];return /^[\w-]{11}$/.test(u)?u:null}
+function ytT(u){const m=(u||"").match(/[?&]t=(\d+h)?(\d+m)?(\d+)s?/);if(!m)return 0;return (parseInt(m[1])||0)*3600+(parseInt(m[2])||0)*60+(parseInt(m[3])||0)}
+function parseTime(v){v=String(v||"").trim();if(!v)return null;const p=v.split(":").map(Number);if(p.some(isNaN))return null;return p.reduce((a,x)=>a*60+x,0)}
+function fmtTime(s){s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(x).padStart(2,"0")}
+function ytApi(){return new Promise((res,rej)=>{if(window.YT&&YT.Player)return res();
+  window.onYouTubeIframeAPIReady=()=>res();if(YT_.apiLoading)return;YT_.apiLoading=true;
+  const s=document.createElement("script");s.src="https://www.youtube.com/iframe_api";s.onerror=()=>rej(new Error("blocked"));document.head.appendChild(s);setTimeout(()=>rej(new Error("timeout")),12000)})}
+async function ytOpen(id,start,end){$("yt-msg").textContent="Loading video…";$("yt-wrap").classList.remove("hidden");$("yt-det").open=true;
+  $("yt-start").value=fmtTime(start||0);$("yt-end").value=end?fmtTime(end):"";YT_.id=id;store.set("md.yt",{id,start:start||0,end:end||null});
+  try{await ytApi()}catch(e){$("yt-msg").textContent=framed()?"YouTube can't load in this embedded copy. Use fiero-fan.github.io/Mix-Doctor.":"Couldn't load YouTube. Check your connection.";return}
+  if(YT_.player){YT_.player.cueVideoById({videoId:id,startSeconds:start||0});$("yt-msg").textContent="";return}
+  YT_.player=new YT.Player("yt-player",{videoId:id,playerVars:{start:Math.floor(start||0),playsinline:1,rel:0,modestbranding:1},
+    events:{onReady:()=>{YT_.ready=true;$("yt-msg").textContent=""},onStateChange:ytState,onError:()=>{$("yt-msg").textContent="This video can't be played embedded. Try another upload of the same song."}}})}
+function ytSnip(){const a=parseTime($("yt-start").value)||0,b=parseTime($("yt-end").value);return {a,b:b&&b>a?b:null}}
+function ytState(e){if(e.data===1&&YT_.learning==="waiting"){YT_.learning="on";const {a,b}=ytSnip(),len=b?b-a:+($("len-target")?.value||20)||20;
+    const title=(YT_.player.getVideoData&&YT_.player.getVideoData().title)||"YouTube clip";
+    startCapture("target",len,()=>{try{YT_.player.pauseVideo()}catch(x){}YT_.learning=false;$("yt-msg").textContent="Learned ✓ Now play yourself in step 2."}).then(ok=>{
+      if(ok&&L.cap){L.cap.name=`${title.length>44?title.slice(0,42).trim()+"…":title} (${fmtTime(a)}–${fmtTime(a+len)})`;L.cap.yt={id:YT_.id,start:a,end:a+len}}
+      else{YT_.learning=false;try{YT_.player.pauseVideo()}catch(x){}}})}}
+function ytPlaySnippet(){if(!YT_.ready)return;const {a,b}=ytSnip();YT_.player.seekTo(a,true);YT_.player.playVideo();clearInterval(YT_.watch);
+  if(b)YT_.watch=setInterval(()=>{try{if(YT_.player.getCurrentTime()>=b&&!YT_.learning){YT_.player.pauseVideo();clearInterval(YT_.watch)}}catch(e){}},200)}
+$("yt-load").onclick=()=>{const u=$("yt-url").value,id=ytId(u);if(!id){$("yt-msg").textContent="That doesn't look like a YouTube link.";$("yt-wrap").classList.remove("hidden");return}ytOpen(id,ytT(u),null)};
+$("yt-url").onkeydown=e=>{if(e.key==="Enter")$("yt-load").click()};
+document.querySelectorAll("[data-now]").forEach(b=>b.onclick=()=>{if(!YT_.ready)return;$("yt-"+b.dataset.now).value=fmtTime(YT_.player.getCurrentTime());saveSnip()});
+function saveSnip(){if(YT_.id){const {a,b}=ytSnip();store.set("md.yt",{id:YT_.id,start:a,end:b})}}
+$("yt-start").onchange=saveSnip;$("yt-end").onchange=saveSnip;
+$("yt-play").onclick=ytPlaySnippet;
+$("yt-learn").onclick=async()=>{if(!YT_.ready){$("yt-msg").textContent="Load a video first.";return}
+  if(!L.ctx){try{await connect()}catch(e){$("yt-msg").textContent="Connect the input first (top right).";return}}
+  YT_.learning="waiting";$("yt-msg").textContent="Playing the snippet and listening…";const {a}=ytSnip();YT_.player.seekTo(a,true);YT_.player.playVideo()};
+{const last=store.get("md.yt",null);if(last&&last.id){$("yt-url").value="https://youtu.be/"+last.id;$("yt-start").value=fmtTime(last.start||0);$("yt-end").value=last.end?fmtTime(last.end):"";$("yt-wrap").classList.remove("hidden");
+  ytOpen(last.id,last.start||0,last.end||null)}}
 
 /* ================================================================= LOOP */
 function tick(){const m=momentary();$("in-lvl").style.width=(m==null?0:Math.max(0,Math.min(100,(m+50)/50*100)))+"%";
