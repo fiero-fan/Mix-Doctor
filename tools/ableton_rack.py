@@ -226,17 +226,25 @@ ROCKET_BLEND = {
 # with the voice. Ring modulation adds the metal. One serial chain, blended like Rocket Blend.
 ROBOT_ME = {
     "name": "Robot Me",
-    "macros": [("Robot", 85), ("Tune", 127), ("Metal", 40), ("Space", 45),
-               ("Octave", 64), ("Formant", 64)],
+    # v2 after listening: tune measured 10 cents off-note and the vocoder layer pulled it back
+    # to 19, so: no pitch smoothing (instant steps), Retro vocoder with narrow bands, a light
+    # digital crush, and more robot by default.
+    "macros": [("Robot", 115), ("Tune", 127), ("Metal", 40), ("Space", 40),
+               ("Octave", 64), ("Formant", 64), ("Crush", 50)],
     "chains": [
         {"name": "Robot voice", "devices": [
             {"preset": "Auto Shift/Tune Hard", "label": "Snap to notes",
+             "set": {"Quantizer_Smooth": False, "Quantizer_SmoothingTime": 0},
              "macros": {"Quantizer_Amount": (1, 0, 1), "PitchShift_FormantShift": (5, -1, 1)}},
             {"preset": "Vocoder/Chromatic", "label": "Synth follows your melody",
              "set": {"CarrierSource/Type": 3, "CarrierSource/DetectionLowerBound": 70,
                      "CarrierSource/DetectionUpperBound": 900, "CarrierSource/OscillatorWaveform": 0,
-                     "LowFrequency": 80, "HighFrequency": 12000, "OutputGain": 6, "FormantShift": 0},
+                     "LowFrequency": 80, "HighFrequency": 12000, "OutputGain": 6, "FormantShift": 0,
+                     "Retro": True, "FilterBandWidth": 0.15, "EnvelopeRate": 60},
              "macros": {"DryWet": (0, 0, 1), "CarrierSource/OscillatorPitch": (4, -12, 12)}},
+            {"preset": "Redux/Synth Bite", "label": "Digital edge",
+             "set": {"SampleRate": 16000, "BitDepth": 10, "Jitter": 0},
+             "macros": {"DryWet": (6, 0, 0.7)}},
             {"preset": "Shifter/Spacebirds", "label": "Metal",
              "set": {"Global_ShifterMode": 2, "ModBasedShifting_RingMod_Coarse": 60,
                      "ModBasedShifting_RingMod_Drive": False, "Lfo_Amount": 0, "Delay_On": False},
