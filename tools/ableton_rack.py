@@ -76,6 +76,13 @@ def build(spec, out):
     # chains
     branches = g.find("BranchPresets")
     tmpl_branch = copy.deepcopy(branches[0])
+    # The shell maps its chain selector and chain volumes to macros 7 and 8; left in,
+    # macro 8 at 0 turns every chain down to -70 dB. Drop all macro mappings we inherit.
+    for holder in (rack, tmpl_branch.find("MixerPreset")):
+        for p in holder.iter():
+            km = p.find("KeyMidi")
+            if km is not None and km.find("Channel").get("Value") == "16":
+                p.remove(km)
     tmpl_dev = copy.deepcopy(tmpl_branch.find("DevicePresets")[0])
     for b in list(branches):
         branches.remove(b)
