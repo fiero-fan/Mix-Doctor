@@ -319,6 +319,19 @@ const CHAINS=[
    {plugin:"Channel EQ",kind:"eq",role:"Shape and clean up",knobs:[["Low cut","80 Hz",.2],["300 Hz","0 dB",.5],["3 kHz","0 dB",.5],["High cut","10 kHz",.8]]},
    {plugin:"Tape Delay",kind:"delay",role:"Echo",knobs:[["Time","1/4",.5],["Feedback","20%",.2],["Mix","15%",.15]]}],sends:[["Bus 1 → Reverb","−14 dB"]]},
   {name:"Aux 1 · Reverb",slots:[{plugin:"ChromaVerb",kind:"reverb",role:"Room around the guitar",knobs:[["Room","Room",.4],["Decay","2 s",.45],["Mix","100% wet",1]]}]}]},
+ {id:"rocket",ctx:"tone",name:"Rocket launch 🚀",tips:["Tremolo-pick a low string and slide up to the top fret","Swell in with the volume knob","Scrape the pick down the strings for lift-off"],strips:[
+  {name:"Guitar",slots:[
+   {plugin:"Compressor",kind:"dynamics",role:"Long notes: the engine keeps burning",knobs:[["Ratio","8:1",.7],["Attack","5 ms",.15],["Release","300 ms",.55],["Reduction","≈10 dB",.7]],extra:"Circuit type: FET"},
+   {plugin:"Pedalboard: Fuzz Machine",kind:"drive",role:"Engine roar",knobs:[["Fuzz","8",.8],["Tone","3",.3],["Level","5",.5]]},
+   {plugin:"Auto Filter",kind:"eq",role:"Whoosh: opens up on every note",knobs:[["Cutoff","15%",.15],["Resonance","60%",.6],["Envelope","+80%",.8],["Attack","1.5 s",.7]],extra:"Filter: Lowpass 24 dB · Sustain 100%"},
+   {plugin:"Ringshifter",kind:"modulation",role:"The spiral that climbs forever",knobs:[["Mode","Freq shifter",null],["Frequency","+40 Hz",.6],["Feedback","65%",.65],["Dry/Wet","50%",.5]],extra:"More Frequency = faster climb"},
+   {plugin:"Pitch Shifter",kind:"modulation",role:"The climb: automate it upward",knobs:[["Semitones","0 → +12",.5],["Mix","40%",.4]],extra:"Press A in Logic, draw Semitones rising from 0 to +12 over 4 bars"},
+   {plugin:"Tape Delay",kind:"delay",role:"Exhaust trail",knobs:[["Time","1/8",.35],["Feedback","55%",.55],["Mix","30%",.3],["High cut","2.5 kHz",.3]]}],
+   sends:[["Bus 1 → Sky","−6 dB"],["Bus 2 → Rumble","−10 dB"]]},
+  {name:"Aux 1 · Sky",slots:[{plugin:"ChromaVerb",kind:"reverb",role:"Disappearing into the sky",knobs:[["Room","Smooth Space",.8],["Decay","8 s",.85],["Pre-delay","60 ms",.35],["Mix","100% wet",1]]}]},
+  {name:"Aux 2 · Rumble",slots:[
+   {plugin:"Pitch Shifter",kind:"modulation",role:"Octave down: launch-pad rumble",knobs:[["Semitones","−12",.25],["Mix","100%",1]]},
+   {plugin:"Channel EQ",kind:"eq",role:"Only the deep shake",knobs:[["Low cut","30 Hz",.1],["High cut","200 Hz",.25]]}]}]},
  {id:"mixbus",ctx:"mix",name:"Stereo Out (mix bus)",tips:["Fix big problems in the tracks first","Small moves on the mix bus"],strips:[
   {name:"Stereo Out",slots:[
    {plugin:"Channel EQ",kind:"eq",role:"Overall tone balance",knobs:[["Low cut","30 Hz",.15],["Low shelf","0 dB",.5],["300 Hz","0 dB",.5],["3 kHz","0 dB",.5],["High shelf","0 dB",.5]]},
@@ -337,7 +350,8 @@ const LIB=[["Noise Gate","utility",["Threshold"]],["Compressor","dynamics",["Thr
  ["Channel EQ","eq",["Low cut","Low shelf","300 Hz","3 kHz","High shelf","High cut"]],["Stereo Delay","delay",["Time","Feedback","Mix"]],["Tape Delay","delay",["Time","Feedback","Mix","High cut"]],
  ["Modulation Delay","modulation",["Rate","Depth","Mix"]],["Chorus","modulation",["Rate","Depth","Mix"]],["Flanger","modulation",["Rate","Depth","Feedback","Mix"]],["Phaser","modulation",["Rate","Depth","Mix"]],
  ["ChromaVerb","reverb",["Decay","Mix"]],["Space Designer","reverb",["Decay","Mix"]],["Multipressor","dynamics",["Threshold","Ratio"]],["DeEsser 2","utility",["Strength"]],
- ["Direction Mixer","utility",["Spread"]],["Adaptive Limiter","limiter",["Gain","Ceiling"]],["Gain","utility",["Gain"]]];
+ ["Direction Mixer","utility",["Spread"]],["Adaptive Limiter","limiter",["Gain","Ceiling"]],["Gain","utility",["Gain"]],
+ ["Auto Filter","eq",["Cutoff","Resonance","Envelope"]],["Ringshifter","modulation",["Frequency","Feedback","Dry/Wet"]],["Pitch Shifter","modulation",["Semitones","Mix"]],["Phat FX","drive",["Drive","Cutoff","Mix"]]];
 function slotFromLib(n){const l=LIB.find(x=>x[0]===n)||[n,"utility",[]];return {plugin:l[0],kind:l[1],knobs:l[2].map(k=>[k,"",null])}}
 const SEED={id:"my-heavenly",ctx:"tone",name:"My guitar · Heavenly Tweed",strips:[
   {name:"Guitar (Input 1)",out:"Bus 5",slots:["Noise Gate","Amp Designer","Channel EQ","Compressor","Stereo Delay"].map(slotFromLib),sends:[["Bus 7 → Mod FX",""]]},

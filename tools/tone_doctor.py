@@ -130,7 +130,9 @@ LIB = [["Noise Gate", "utility", ["Threshold"]], ["Compressor", "dynamics", ["Th
        ["ChromaVerb", "reverb", ["Decay", "Mix"]], ["Space Designer", "reverb", ["Decay", "Mix"]],
        ["Multipressor", "dynamics", ["Threshold", "Ratio"]], ["DeEsser 2", "utility", ["Strength"]],
        ["Direction Mixer", "utility", ["Spread"]], ["Adaptive Limiter", "limiter", ["Gain", "Ceiling"]],
-       ["Gain", "utility", ["Gain"]]]
+       ["Gain", "utility", ["Gain"]],
+       ["Auto Filter", "eq", ["Cutoff", "Resonance", "Envelope"]], ["Ringshifter", "modulation", ["Frequency", "Feedback", "Dry/Wet"]],
+       ["Pitch Shifter", "modulation", ["Semitones", "Mix"]], ["Phat FX", "drive", ["Drive", "Cutoff", "Mix"]]]
 
 
 def slot_from_lib(name):
