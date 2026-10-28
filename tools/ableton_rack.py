@@ -107,7 +107,10 @@ def build(spec, out):
             holder.remove(holder[0])
             holder.append(dev)
             dps.append(w)
-        b.find(".//AudioBranchMixerDevice/Volume/Manual").set("Value", str(chain.get("volume", 1)))
+        mixer = b.find(".//AudioBranchMixerDevice")
+        mixer.find("Volume/Manual").set("Value", str(chain.get("volume", 1)))
+        if "volume_macro" in chain:  # (macro, 0) -> chain level from -70 dB up to +6 dB
+            map_macro(mixer, "Volume", chain["volume_macro"], 0.0003162277571, 1.99526238)
         # Full chain-select zone with no fades. The shell's zones fade in across 0-127,
         # which silences every chain when the selector sits at 0.
         for tag, v in [("Min", 0), ("Max", 127), ("CrossfadeMin", 0), ("CrossfadeMax", 127)]:
@@ -150,7 +153,38 @@ ROCKET = {
         ]},
     ],
 }
-RACKS = {"rocket": ROCKET}
+# v2: your notes stay clear on a dry chain; a parallel chain turns each note into a launch.
+# Shifter's envelope drops the pitch on the pick attack, then it swoops up to Height;
+# Auto Filter's negative envelope closes on the attack and sweeps open as the note rings.
+ROCKET_NOTES = {
+    "name": "Rocket Notes",
+    "macros": [("Guitar", 108), ("Rocket", 100), ("Climb", 90), ("Whoosh", 100),
+               ("Roar", 50), ("Sky", 50), ("Gate", 40), ("Height", 64)],
+    "chains": [
+        {"name": "Guitar", "volume_macro": 0, "devices": []},
+        {"name": "Rocket", "volume_macro": 1, "devices": [
+            {"preset": "Gate/Soft Reducer", "label": "Silence between notes",
+             "set": {"Gain": 0, "Release": 150},
+             "macros": {"Threshold": (6, 0.003, 0.1)}},
+            {"preset": "Roar/Bass Fuzz", "label": "Engine roar",
+             "macros": {"Input_InputGain": (4, 1.0, 3.16)}},
+            {"preset": "Shifter/Twisted Riser", "label": "Swoop up per note",
+             "set": {"Global_ShifterMode": 0, "Lfo_Amount": 0, "Lfo_AmountPitch": 0, "Delay_On": False,
+                     "EnvelopeFollower_On": True, "EnvelopeFollower_Attack": 0.002,
+                     "EnvelopeFollower_Release": 0.4, "Global_DryWet": 1},
+             "macros": {"EnvelopeFollower_AmountPitch": (2, 0, -24), "Pitch_Coarse": (7, 0, 24)}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Whoosh opening up",
+             "set": {"Filter_Frequency": 6000, "Lfo_Amount": 0, "Envelope_Attack": 0.01, "Envelope_Release": 2.5},
+             "macros": {"Envelope_Amount": (3, 0, -1)}},
+            {"preset": "Echo/Vintage Delay/Long Tape", "label": "Exhaust trail",
+             "set": {"Noise_On": False, "Wobble_On": False, "Feedback": 0.45, "DryWet": 0.3}},
+            {"preset": "Hybrid Reverb/Space/Large Dark Space", "label": "Into the sky",
+             "set": {"Algorithm_Decay": 6},
+             "macros": {"DryWet": (5, 0, 0.7)}},
+        ]},
+    ],
+}
+RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES}
 
 
 def main():
