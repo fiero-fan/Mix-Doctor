@@ -229,8 +229,11 @@ ROBOT_ME = {
     # v2 after listening: tune measured 10 cents off-note and the vocoder layer pulled it back
     # to 19, so: no pitch smoothing (instant steps), Retro vocoder with narrow bands, a light
     # digital crush, and more robot by default.
-    "macros": [("Robot", 115), ("Tune", 127), ("Metal", 40), ("Space", 40),
-               ("Octave", 64), ("Formant", 64), ("Crush", 50)],
+    # v4: v2 was robotic but muffled with unclear words, so: unvoiced detection on (consonants),
+    # crush at a higher sample rate, a bit less robot and room. Retro stays on (measured brighter
+    # than off). Wave is on a macro; 0 measured brightest, 85 darkest.
+    "macros": [("Robot", 105), ("Tune", 127), ("Metal", 40), ("Space", 30),
+               ("Octave", 64), ("Formant", 64), ("Crush", 40), ("Wave", 0)],
     "chains": [
         {"name": "Robot voice", "devices": [
             {"preset": "Auto Shift/Tune Hard", "label": "Snap to notes",
@@ -240,10 +243,13 @@ ROBOT_ME = {
              "set": {"CarrierSource/Type": 3, "CarrierSource/DetectionLowerBound": 70,
                      "CarrierSource/DetectionUpperBound": 900, "CarrierSource/OscillatorWaveform": 0,
                      "LowFrequency": 80, "HighFrequency": 12000, "OutputGain": 6, "FormantShift": 0,
-                     "Retro": True, "FilterBandWidth": 0.15, "EnvelopeRate": 60},
-             "macros": {"DryWet": (0, 0, 1), "CarrierSource/OscillatorPitch": (4, -12, 12)}},
+                     "Retro": True, "FilterBandWidth": 0.15, "EnvelopeRate": 60,
+                     "UvdLevel": 0.35, "UvdThreshold": 0.5},
+             "macros": {"DryWet": (0, 0, 1), "CarrierSource/OscillatorPitch": (4, -12, 12),
+                        "CarrierSource/OscillatorWaveform": (7, 0, 3)}},
             {"preset": "Redux/Synth Bite", "label": "Digital edge",
-             "set": {"SampleRate": 16000, "BitDepth": 10, "Jitter": 0},
+             "set": {"SampleRate": 30000, "BitDepth": 10, "Jitter": 0,
+                     "EnablePreFilter": False, "EnablePostFilter": False},
              "macros": {"DryWet": (6, 0, 0.7)}},
             {"preset": "Shifter/Spacebirds", "label": "Metal",
              "set": {"Global_ShifterMode": 2, "ModBasedShifting_RingMod_Coarse": 60,
