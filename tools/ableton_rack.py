@@ -33,10 +33,11 @@ def load_device(preset):
 
 
 def set_param(dev, name, value):
-    p = dev.find(name)
-    if p is None or p.find("Manual") is None:
+    p = dev.find(name)  # a knob, or a path to a plain setting like "CarrierSource/Type"
+    if p is None:
         sys.exit(f"{dev.tag} has no knob called {name}")
-    p.find("Manual").set("Value", str(value).lower() if isinstance(value, bool) else str(value))
+    target = p.find("Manual") if p.find("Manual") is not None else p
+    target.set("Value", str(value).lower() if isinstance(value, bool) else str(value))
 
 
 def map_macro(dev, name, macro, lo, hi):
@@ -220,7 +221,32 @@ ROCKET_BLEND = {
         ]},
     ],
 }
-RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND}
+# Robot voice that stays melodic: Auto Shift snaps the voice to the nearest note (hard tune),
+# then the Vocoder's pitch-tracking carrier plays a synth that follows that melody, blended
+# with the voice. Ring modulation adds the metal. One serial chain, blended like Rocket Blend.
+ROBOT_ME = {
+    "name": "Robot Me",
+    "macros": [("Robot", 85), ("Tune", 127), ("Metal", 40), ("Space", 45),
+               ("Octave", 64), ("Formant", 64)],
+    "chains": [
+        {"name": "Robot voice", "devices": [
+            {"preset": "Auto Shift/Tune Hard", "label": "Snap to notes",
+             "macros": {"Quantizer_Amount": (1, 0, 1), "PitchShift_FormantShift": (5, -1, 1)}},
+            {"preset": "Vocoder/Chromatic", "label": "Synth follows your melody",
+             "set": {"CarrierSource/Type": 3, "CarrierSource/DetectionLowerBound": 70,
+                     "CarrierSource/DetectionUpperBound": 900, "CarrierSource/OscillatorWaveform": 0,
+                     "LowFrequency": 80, "HighFrequency": 12000, "OutputGain": 6, "FormantShift": 0},
+             "macros": {"DryWet": (0, 0, 1), "CarrierSource/OscillatorPitch": (4, -12, 12)}},
+            {"preset": "Shifter/Spacebirds", "label": "Metal",
+             "set": {"Global_ShifterMode": 2, "ModBasedShifting_RingMod_Coarse": 60,
+                     "ModBasedShifting_RingMod_Drive": False, "Lfo_Amount": 0, "Delay_On": False},
+             "macros": {"Global_DryWet": (2, 0, 0.6)}},
+            {"preset": "Hybrid Reverb/Room/Modest Corner", "label": "Room",
+             "macros": {"DryWet": (3, 0, 0.5)}},
+        ]},
+    ],
+}
+RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME}
 
 
 def main():
