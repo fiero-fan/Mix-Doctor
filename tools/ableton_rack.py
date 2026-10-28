@@ -186,7 +186,41 @@ ROCKET_NOTES = {
         ]},
     ],
 }
-RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES}
+# v3: one chain. The guitar goes through every stage and each device blends clean and
+# rocket itself, so there is no clean "source" with an effect "shadow" beside it.
+ROCKET_BLEND = {
+    "name": "Rocket Blend",
+    "macros": [("Blend", 75), ("Climb", 25), ("Height", 64), ("Whoosh", 80),
+               ("Roar", 50), ("Sky", 35), ("Gate", 35), ("Trail", 28)],
+    "chains": [
+        {"name": "Rocket guitar", "devices": [
+            {"preset": "Gate/Soft Reducer", "label": "Quiet between notes",
+             "set": {"Gain": 0, "Release": 200},
+             "macros": {"Threshold": (6, 0.003, 0.1)}},
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Even notes",
+             "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 200, "Gain": 0}},
+            {"preset": "Roar/Bass Fuzz", "label": "Engine grit",
+             "set": {"Input_InputGain": 1.4},
+             "macros": {"Output_DryWet": (4, 0, 0.8)}},
+            {"preset": "Shifter/Twisted Riser", "label": "Swoop up",
+             "set": {"Global_ShifterMode": 0, "Lfo_Amount": 0, "Lfo_AmountPitch": 0, "Delay_On": False,
+                     "EnvelopeFollower_On": True, "EnvelopeFollower_Attack": 0.002, "EnvelopeFollower_Release": 0.4},
+             "macros": {"Global_DryWet": (0, 0, 1), "EnvelopeFollower_AmountPitch": (1, 0, -24),
+                        "Pitch_Coarse": (2, 0, 24)}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Whoosh",
+             "set": {"Filter_Frequency": 7000, "Lfo_Amount": 0, "Envelope_Attack": 0.01,
+                     "Envelope_Release": 2.5, "DryWet": 0.8},
+             "macros": {"Envelope_Amount": (3, 0, -1)}},
+            {"preset": "Echo/Vintage Delay/Long Tape", "label": "Exhaust trail",
+             "set": {"Noise_On": False, "Wobble_On": False, "Feedback": 0.45},
+             "macros": {"DryWet": (7, 0, 0.6)}},
+            {"preset": "Hybrid Reverb/Space/Large Dark Space", "label": "Into the sky",
+             "set": {"Algorithm_Decay": 6},
+             "macros": {"DryWet": (5, 0, 0.7)}},
+        ]},
+    ],
+}
+RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND}
 
 
 def main():
