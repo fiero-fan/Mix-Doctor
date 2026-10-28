@@ -61,6 +61,7 @@ def build(spec, out):
     rack = g.find("Device")[0]
     rack.find("UserName").set("Value", spec["name"])
     rack.find("AreDevicesVisible").set("Value", "true")
+    rack.find("ChainSelector/Manual").set("Value", "0")
     # macros: names and starting positions; clear factory snapshots
     for i in range(16):
         m = spec["macros"][i] if i < len(spec["macros"]) else None
@@ -100,6 +101,10 @@ def build(spec, out):
             holder.append(dev)
             dps.append(w)
         b.find(".//AudioBranchMixerDevice/Volume/Manual").set("Value", str(chain.get("volume", 1)))
+        # Full chain-select zone with no fades. The shell's zones fade in across 0-127,
+        # which silences every chain when the selector sits at 0.
+        for tag, v in [("Min", 0), ("Max", 127), ("CrossfadeMin", 0), ("CrossfadeMax", 127)]:
+            b.find(f"BranchSelectorRange/{tag}").set("Value", str(v))
         branches.append(b)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     with gzip.open(out, "wb") as f:
