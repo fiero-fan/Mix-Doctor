@@ -140,6 +140,12 @@ svg text{fill:var(--text-secondary);font-size:11px}
 .snip{display:grid;grid-template-columns:auto 1fr auto;gap:6px 8px;align-items:center;margin:10px 0}
 .snip input{width:100%;font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary);font-variant-numeric:tabular-nums}
 .btn.sm{padding:5px 9px;font-size:13px}
+.slot.ed{cursor:default}.slot .ctl{display:flex;gap:2px}.slot .ctl button{border:0;background:#55555a;color:#fff;border-radius:4px;width:20px;height:20px;font-size:11px;cursor:pointer;padding:0}
+.sname{width:100%;font:inherit;font-size:13px;padding:4px 6px;border-radius:6px;border:1px solid #4a4a4e;background:#1d1d1f;color:#f5f5f7}
+.addp{width:100%;font-size:12.5px;background:#323236;color:#d1d1d6;border:1px dashed #5a5a5e;border-radius:6px;padding:6px}
+.addstrip{border:1px dashed #5a5a5e!important;background:transparent!important;color:#a1a1a6;cursor:pointer;justify-content:center;align-items:center;font:inherit}
+.mixer.editing .strip{width:200px;flex-basis:200px}.mixer.editing .slot{font-size:12.5px}
+.out{color:#8e8e93;font-size:11.5px;text-align:center}
 details summary{cursor:pointer;color:var(--text-secondary);font-size:13px;margin-top:14px}
 textarea{width:100%;min-height:90px;font:13px/1.4 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-1);color:var(--text-primary);margin-top:6px}
 </style>
@@ -325,10 +331,24 @@ const GENRE_TONE={rock:{sub:[-14,-5],bass:[-3,4],"low-mids":[-3,2],"upper-mids":
   disco:{sub:[-12,-4],bass:[-1,5],"low-mids":[-3,2],"upper-mids":[-5,0],presence:[-8,-2],air:[-15,-7]},
   electronic:{sub:[-8,1],bass:[0,7],"low-mids":[-4,1],"upper-mids":[-6,0],presence:[-9,-3],air:[-15,-7]}};
 
+// Logic stock plugins the chain editor knows, with the knobs advice can point at
+const LIB=[["Noise Gate","utility",["Threshold"]],["Compressor","dynamics",["Threshold","Ratio","Attack","Release"]],["Pedalboard","drive",["Drive","Tone","Level"]],
+ ["Amp Designer","amp",["Gain","Bass","Mids","Treble","Presence"]],["Bass Amp Designer","amp",["Gain","Bass","Mids","Treble"]],
+ ["Channel EQ","eq",["Low cut","Low shelf","300 Hz","3 kHz","High shelf","High cut"]],["Stereo Delay","delay",["Time","Feedback","Mix"]],["Tape Delay","delay",["Time","Feedback","Mix","High cut"]],
+ ["Modulation Delay","modulation",["Rate","Depth","Mix"]],["Chorus","modulation",["Rate","Depth","Mix"]],["Flanger","modulation",["Rate","Depth","Feedback","Mix"]],["Phaser","modulation",["Rate","Depth","Mix"]],
+ ["ChromaVerb","reverb",["Decay","Mix"]],["Space Designer","reverb",["Decay","Mix"]],["Multipressor","dynamics",["Threshold","Ratio"]],["DeEsser 2","utility",["Strength"]],
+ ["Direction Mixer","utility",["Spread"]],["Adaptive Limiter","limiter",["Gain","Ceiling"]],["Gain","utility",["Gain"]]];
+function slotFromLib(n){const l=LIB.find(x=>x[0]===n)||[n,"utility",[]];return {plugin:l[0],kind:l[1],knobs:l[2].map(k=>[k,"",null])}}
+const SEED={id:"my-heavenly",ctx:"tone",name:"My guitar · Heavenly Tweed",strips:[
+  {name:"Guitar (Input 1)",out:"Bus 5",slots:["Noise Gate","Amp Designer","Channel EQ","Compressor","Stereo Delay"].map(slotFromLib),sends:[["Bus 7 → Mod FX",""]]},
+  {name:"Mod FX (Bus 7)",out:"Bus 5",slots:["Modulation Delay","Flanger","Phaser"].map(slotFromLib)},
+  {name:"Heavenly Tweed (stack)",out:"Stereo Out",slots:["Compressor"].map(slotFromLib)}]};
+
 /* =================================================================== STATE */
 const store={get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
-const S={ctx:store.get("md.ctx","tone"),tone:{target:null,takes:[],chain:"gilmour"},mix:{target:null,takes:[],chain:"mixbus"},sel:[0,0],
+const S={ctx:store.get("md.ctx","tone"),edit:false,tone:{target:null,takes:[],chain:store.get("md.seeded",false)?(store.get("md.chains",[]).find(x=>x.ctx==="tone")||{id:"gilmour"}).id:"my-heavenly"},mix:{target:null,takes:[],chain:"mixbus"},sel:[0,0],
   userChains:store.get("md.chains",[]),saved:store.get("md.targets",[]),busy:{}, err:{}};
+if(!store.get("md.seeded",false)){if(!S.userChains.some(x=>x.id==="my-heavenly"))S.userChains.unshift(JSON.parse(JSON.stringify(SEED)));store.set("md.chains",S.userChains);store.set("md.seeded",true)}
 const C=()=>S[S.ctx];
 const allChains=()=>[...CHAINS,...S.userChains];
 const curChain=()=>allChains().find(c=>c.id===C().chain)||CHAINS.find(c=>c.ctx===S.ctx);
@@ -340,15 +360,15 @@ const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim
 // diff > 0 means YOU have more of it than the target
 function row(key,label,less,more,diff,tol,scale,plus,minus){return {key,label,less,more,diff,tol,scale,plus,minus}}
 function toneRows(t,y){return [
-  row("bright","Brightness","darker","brighter",12*Math.log2(y.centroid/t.centroid),2,12,[["amp","Treble","↓"],["eq","High cut","↓"]],[["amp","Treble","↑"],["amp","Presence","↑"]]),
+  row("bright","Brightness","darker","brighter",12*Math.log2(y.centroid/t.centroid),2,12,[["amp","Treble","↓"],["eq","High cut","↓"]],[["amp","Treble","↑"],["eq","High shelf","↑"],["amp","Presence","↑"]]),
   row("low","Low end","thinner","boomier",y.low-t.low,2,10,[["eq","Low cut","↑"],["amp","Bass","↓"]],[["amp","Bass","↑"]]),
   row("body","Body","thinner","muddier",y.body-t.body,2,10,[["eq","300 Hz","↓"],["amp","Bass","↓"]],[["amp","Mids","↑"]]),
   row("bite","Bite","softer","harsher",y.bite-t.bite,2,10,[["eq","3 kHz","↓"],["amp","Presence","↓"]],[["amp","Presence","↑"],["amp","Mids","↑"]]),
-  row("fizz","Fizz / air","duller","fizzier",y.fizz-t.fizz,2.5,12,[["eq","High cut","↓"],["drive","Tone","↓"]],[["eq","High cut","↑"]]),
+  row("fizz","Fizz / air","duller","fizzier",y.fizz-t.fizz,2.5,12,[["eq","High cut","↓"],["drive","Tone","↓"]],[["eq","High shelf","↑"],["eq","High cut","↑"],["amp","Presence","↑"]]),
   row("grit","Grit","cleaner","dirtier",y.grit-t.grit,1.5,8,[["drive","Fuzz|Drive","↓"],["amp","Gain","↓"]],[["drive","Fuzz|Drive","↑"],["amp","Gain","↑"]]),
-  row("sustain","Sustain","choppier","more squashed",t.dyn-y.dyn,1.5,8,[["dynamics","Ratio","↓"]],[["dynamics","Ratio","↑"],["drive","Fuzz|Drive","↑"]]),
-  row("space","Echo / space","drier","wetter",y.space-t.space,2,12,[["delay","Mix","↓"]],[["delay","Mix","↑"],["delay","Feedback","↑"]]),
-  row("width","Width","narrower","wider",y.width-t.width,3,15,[["delay","Mix","↓"]],[["delay","Mix","↑"]])]}
+  row("sustain","Sustain","choppier","more squashed",t.dyn-y.dyn,1.5,8,[["dynamics","Ratio","↓"],["drive","Fuzz|Drive","↓"]],[["dynamics","Ratio","↑"],["drive","Fuzz|Drive","↑"]]),
+  row("space","Echo / space","drier","wetter",y.space-t.space,2,12,[["delay","Mix","↓"],["reverb","Mix","↓"],["modulation","Mix","↓"]],[["delay","Mix","↑"],["reverb","Mix","↑"],["delay","Feedback","↑"]]),
+  row("width","Width","narrower","wider",y.width-t.width,3,15,[["modulation","Mix","↓"],["delay","Mix","↓"]],[["modulation","Mix","↑"],["delay","Mix","↑"]])]}
 const avg2=(o,a,b)=>(o[a]+o[b])/2;
 function mixRows(t,y){const T=t.tone_vs_mids_db,Y=y.tone_vs_mids_db;return [
   row("loud","Loudness","quieter","louder",y.loudness.integrated_lufs-t.loudness.integrated_lufs,1,10,[["limiter","Gain","↓"]],[["limiter","Gain","↑"]]),
@@ -366,15 +386,15 @@ function rowsFor(take){const t=C().target;if(!t||!take)return null;
 function scoreOf(rows){if(!rows)return null;const m=rows.reduce((a,r)=>a+Math.min(1,Math.max(0,Math.abs(r.diff)-r.tol/2)/r.scale),0)/rows.length;return Math.round(100*(1-m))}
 function amountWord(r){const x=Math.abs(r.diff)/r.tol;return x<2.5?"a little":x<5?"":"a lot"}
 function adviceFor(rows,take){const ch=curChain(),out=[];
-  const findSlot=kind=>{for(let si=0;si<ch.strips.length;si++){const i=ch.strips[si].slots.findIndex(s=>s.kind===kind);if(i>=0)return [si,i]}return null};
+  const findSlot=(kind,knob)=>{for(let si=0;si<ch.strips.length;si++){const i=ch.strips[si].slots.findIndex(s=>s.kind===kind&&(!knob||(s.knobs||[]).some(k=>new RegExp(knob,"i").test(k[0]))));if(i>=0)return [si,i]}return null};
   if(S.ctx==="mix"&&take){const L=take.ana.loudness;
     if(L.true_peak_dbtp>-1)out.push({kind:"limiter",knob:"Ceiling",dir:"−1 dB",why:`Peaks hit ${L.true_peak_dbtp} dBTP: risky on Spotify`,w:99});
     if(take.ana.stereo.low_end_side_vs_mid_db>-15)out.push({kind:"tracks",knob:"Keep bass & kick centred",dir:"",why:"The low end is spread wide",w:50})}
   for(const r of rows||[]){if(Math.abs(r.diff)<=r.tol)continue;const opts=r.diff>0?r.plus:r.minus;
-    const pick=opts.find(o=>o[0]==="tracks"||findSlot(o[0]))||opts[0];
+    const pick=opts.find(o=>o[0]==="tracks"||findSlot(o[0],o[1]))||opts.find(o=>findSlot(o[0]))||opts[0];
     out.push({kind:pick[0],knob:pick[1],dir:pick[2],amt:amountWord(r),why:`You're ${r.diff>0?r.more:r.less}`,word:r.diff>0?r.more:r.less,w:Math.abs(r.diff)/r.tol,key:r.key})}
   out.sort((a,b)=>b.w-a.w);const seen={},top=out.filter(a=>{const k=a.kind+a.knob;if(seen[k]){seen[k].why+=` and ${a.word}`;return false}seen[k]=a;return true}).slice(0,4);
-  top.forEach(a=>{if(a.word)a.why+=" than the target";a.slot=a.kind==="tracks"?null:findSlot(a.kind);a.plugin=a.slot?ch.strips[a.slot[0]].slots[a.slot[1]].plugin:(a.kind==="tracks"?"In your tracks":`Add a ${KIND[a.kind]?.[1]||a.kind} plugin`)});
+  top.forEach(a=>{if(a.word)a.why+=" than the target";a.slot=a.kind==="tracks"?null:(findSlot(a.kind,a.knob)||findSlot(a.kind));a.plugin=a.slot?ch.strips[a.slot[0]].slots[a.slot[1]].plugin:(a.kind==="tracks"?"In your tracks":`Add a ${KIND[a.kind]?.[1]||a.kind} plugin`)});
   return top}
 
 /* ============================================================ LIVE INPUT */
@@ -508,52 +528,90 @@ function drawCurve(el,t,y){
   el.querySelectorAll(".hit").forEach(r=>{r.onmousemove=e=>{const i=+r.dataset.i,rc=el.getBoundingClientRect(),d=yv[i]-tv[i];
     tip.innerHTML=`<b>${labels[i]}${S.ctx==="tone"?" Hz":""}</b><br>You ${d>0?"+":""}${r1(d)} dB vs target`;tip.style.display="block";
     tip.style.left=Math.min(Math.max(0,e.clientX-rc.left-50),el.clientWidth-110)+"px";tip.style.top=(e.clientY-rc.top-52)+"px"};r.onmouseleave=()=>tip.style.display="none"})}
-function knobSVG(p,hot){const a0=-225,a1=45,a=a0+(a1-a0)*Math.max(0,Math.min(1,p)),r=28,c=36;const pt=d=>[c+r*Math.cos(d*Math.PI/180),c+r*Math.sin(d*Math.PI/180)];
+function knobSVG(p,hot){const unk=p==null||isNaN(p);const a0=-225,a1=45,a=a0+(a1-a0)*Math.max(0,Math.min(1,unk?.5:p)),r=28,c=36;const pt=d=>[c+r*Math.cos(d*Math.PI/180),c+r*Math.sin(d*Math.PI/180)];
   const arc=(s,e)=>{const [x0,y0]=pt(s),[x1,y1]=pt(e);return `M${x0.toFixed(1)},${y0.toFixed(1)}A${r},${r} 0 ${e-s>180?1:0} 1 ${x1.toFixed(1)},${y1.toFixed(1)}`};
   const hx=c+18*Math.cos(a*Math.PI/180),hy=c+18*Math.sin(a*Math.PI/180),col=hot?css('--hot'):css('--accent');
   return `<svg width="72" height="66" viewBox="0 0 72 66" aria-hidden="true"><path d="${arc(a0,a1)}" stroke="${css('--line')}" stroke-width="6" fill="none" stroke-linecap="round"/>
-   ${p>0.005?`<path d="${arc(a0,a)}" stroke="${col}" stroke-width="6" fill="none" stroke-linecap="round"/>`:""}
-   <circle cx="${c}" cy="${c}" r="15" fill="${css('--surface-2')}" stroke="${css('--line')}"/><line x1="${c}" y1="${c}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${css('--text-primary')}" stroke-width="3" stroke-linecap="round"/></svg>`}
-function renderFix(){const c=C(),ch=curChain(),take=c.takes.at(-1),rows=rowsFor(take),adv=rows?adviceFor(rows,take):null,el=$("c-fix");
-  if(S.sel[0]>=ch.strips.length||S.sel[1]>=ch.strips[S.sel[0]].slots.length)S.sel=[0,0];
-  if(adv&&adv.length&&adv[0].slot&&!S.userPicked)S.sel=adv[0].slot;
-  const chains=allChains().filter(x=>x.ctx===S.ctx);
+   ${!unk&&p>0.005?`<path d="${arc(a0,a)}" stroke="${col}" stroke-width="6" fill="none" stroke-linecap="round"/>`:""}
+   <circle cx="${c}" cy="${c}" r="15" fill="${css('--surface-2')}" stroke="${hot?col:css('--line')}" stroke-width="${hot?2:1}"/>
+   ${unk?`<text x="${c}" y="${c+5}" text-anchor="middle" style="font-size:14px;fill:${css('--text-muted')}">?</text>`:`<line x1="${c}" y1="${c}" x2="${hx.toFixed(1)}" y2="${hy.toFixed(1)}" stroke="${css('--text-primary')}" stroke-width="3" stroke-linecap="round"/>`}</svg>`}
+const isMine=ch=>S.userChains.includes(ch);
+const saveChains=()=>store.set("md.chains",S.userChains);
+function newChainFrom(src){const c=JSON.parse(JSON.stringify(src||{name:"My chain",strips:[{name:"Guitar",slots:[]}]}));c.id="c"+Date.now();c.ctx=S.ctx;
+  c.name=src?("My "+src.name.replace(/^My /,"")):"My chain";S.userChains.unshift(c);saveChains();C().chain=c.id;S.sel=[0,0];return c}
+function renderFix(){const c=C(),ch=curChain(),take=c.takes.at(-1),rows=rowsFor(take),adv=rows?adviceFor(rows,take):null,el=$("c-fix"),mine=isMine(ch),ed=S.edit&&mine;
+  if(!ch.strips.length)ch.strips.push({name:"Guitar",slots:[]});
+  if(S.sel[0]>=ch.strips.length||S.sel[1]>=Math.max(1,ch.strips[S.sel[0]].slots.length))S.sel=[0,0];
+  if(adv&&adv.length&&adv[0].slot&&!S.userPicked&&!ed)S.sel=adv[0].slot;
+  const myList=S.userChains.filter(x=>x.ctx===S.ctx),ideas=CHAINS.filter(x=>x.ctx===S.ctx);
   const badges={};(adv||[]).forEach((a,i)=>{if(a.slot){const k=a.slot.join();(badges[k]=badges[k]||[]).push(i+1)}});
-  const mixer=ch.strips.map((s,si)=>`<div class="strip"><div class="lbl">Audio FX</div>`+
-    s.slots.map((sl,i)=>{const k=KIND[sl.kind]||KIND.utility,b=badges[si+","+i];return `<button class="slot" data-s="${si}" data-i="${i}" aria-pressed="${S.sel[0]===si&&S.sel[1]===i}"><i style="background:${k[0]}"></i><span>${esc(sl.plugin)}<small>${k[1]}</small></span>${b?`<span class="bdg">${b.map(n=>`<span>${n}</span>`).join("")}</span>`:""}</button>`}).join("")+
-    ((adv||[]).filter(a=>!a.slot&&a.kind!=="tracks"&&si===0).map(a=>`<div class="slot add">+ ${esc(a.plugin)}</div>`).join(""))+
-    ((s.sends||[]).length?`<div class="lbl">Sends</div>`+s.sends.map(x=>`<div class="send"><span>${esc(x[0])}</span><span>${esc(x[1])}</span></div>`).join(""):"")+
-    `<div class="fader"><div></div></div><div class="nm">${esc(s.name)}</div></div>`).join("");
-  const sl=ch.strips[S.sel[0]].slots[S.sel[1]],k=KIND[sl.kind]||KIND.utility;
-  const here=(adv||[]).filter(a=>a.slot&&a.slot[0]===S.sel[0]&&a.slot[1]===S.sel[1]);
-  const detail=`<div class="muted">${esc(ch.strips[S.sel[0]].name)} · slot ${S.sel[1]+1}</div><h3><i style="background:${k[0]}"></i>${esc(sl.plugin)}</h3><div class="role">${esc(sl.role||"")}</div>
-   <div class="knobs">${(sl.knobs||[]).map(([l,v,p])=>{const h=here.find(a=>new RegExp(a.knob,"i").test(l));
-     return `<div class="knob ${h?"hit":""}">${h?`<span class="go">${h.dir}</span>`:""}${knobSVG(+p||0,!!h)}<div class="kv">${esc(v)}</div><div class="kl">${esc(l)}</div></div>`}).join("")}</div>
-   ${sl.extra?`<div class="extra">${esc(sl.extra)}</div>`:""}<p class="muted" style="margin-top:10px">Knob values are the starting point for this chain. Set them close, then follow the arrows.</p>`;
-  const advHTML=adv==null?`<div class="hint" style="margin:0 0 14px">Advice shows up here after you compare. Meanwhile, here's a starting chain to build in Logic.</div>`:
-    adv.length?`<div class="advice">${adv.map((a,i)=>{const kk=KIND[a.kind]||KIND.utility;return `<button class="adv" data-adv="${i}"><span class="num">${i+1}</span><i style="background:${kk[0]}"></i><span><b>${esc(a.plugin)} · ${esc(a.knob.split("|")[0])} ${esc(a.dir)} ${esc(a.amt||"")}</b><small>${esc(a.why)}</small></span></button>`}).join("")}</div>`:
+  const mixer=ch.strips.map((s,si)=>`<div class="strip">${ed?`<input class="sname" data-sname="${si}" value="${esc(s.name)}" aria-label="Strip name">`:""}<div class="lbl">Audio FX</div>`+
+    s.slots.map((sl,i)=>{const k=KIND[sl.kind]||KIND.utility,b=badges[si+","+i];
+      return ed?`<div class="slot ed"><i style="background:${k[0]}"></i><span style="flex:1">${esc(sl.plugin)}<small>${k[1]}</small></span><span class="ctl"><button data-mv="${si},${i},-1" title="Move up">↑</button><button data-mv="${si},${i},1" title="Move down">↓</button><button data-rm="${si},${i}" title="Remove">✕</button></span></div>`:
+      `<button class="slot" data-s="${si}" data-i="${i}" aria-pressed="${S.sel[0]===si&&S.sel[1]===i}"><i style="background:${k[0]}"></i><span>${esc(sl.plugin)}<small>${k[1]}</small></span>${b?`<span class="bdg">${b.map(n=>`<span>${n}</span>`).join("")}</span>`:""}</button>`}).join("")+
+    (ed?`<select class="addp" data-add="${si}"><option value="">+ Add plugin…</option>${LIB.map(p=>`<option>${p[0]}</option>`).join("")}</select>`:
+      (adv||[]).filter(a=>!a.slot&&a.kind!=="tracks"&&si===0).map(a=>`<div class="slot add">+ ${esc(a.plugin)}</div>`).join(""))+
+    ((s.sends||[]).length&&!ed?`<div class="lbl">Sends</div>`+s.sends.map(x=>`<div class="send"><span>${esc(x[0])}</span><span>${esc(x[1]||"")}</span></div>`).join(""):"")+
+    `<div class="fader"><div></div></div>${ed?"":`<div class="nm">${esc(s.name)}</div>`}${s.out&&!ed?`<div class="out">→ ${esc(s.out)}</div>`:""}
+    ${ed?`<input class="sname" data-sout="${si}" value="${esc(s.out||"")}" placeholder="Output (e.g. Bus 5)" aria-label="Output"><button class="btn sm" data-rms="${si}">Remove strip</button>`:""}</div>`).join("")+
+    (ed?`<button class="strip addstrip" id="add-strip">+ Add strip</button>`:"");
+  const st=ch.strips[S.sel[0]],sl=st.slots[S.sel[1]];
+  let detail;
+  if(ed)detail=`<h3>Edit My chain</h3><p class="role">Build it like your Logic channel strips: one strip per track or aux, plugins top to bottom.</p>
+    <label class="muted">Chain name</label><input class="txt" id="chain-name" value="${esc(ch.name)}" style="width:100%;margin:4px 0 12px">
+    <div class="row"><button class="btn primary" id="edit-done">Done</button><button class="btn" id="chain-del">Delete this chain</button></div>`;
+  else if(!sl)detail=`<p class="muted">This strip is empty. Press ✎ Edit to add plugins.</p>`;
+  else{const k=KIND[sl.kind]||KIND.utility,here=(adv||[]).filter(a=>a.slot&&a.slot[0]===S.sel[0]&&a.slot[1]===S.sel[1]),unknown=(sl.knobs||[]).every(x=>x[2]==null);
+    detail=`<div class="muted">${esc(st.name)} · slot ${S.sel[1]+1}</div><h3><i style="background:${k[0]}"></i>${esc(sl.plugin)}</h3><div class="role">${esc(sl.role||(here.length?"Change this one":"No change needed here"))}</div>
+     <div class="knobs">${(sl.knobs||[]).map(([l,v,p])=>{const h=here.find(a=>new RegExp(a.knob,"i").test(l));
+       return `<div class="knob ${h?"hit":""}">${h?`<span class="go">${h.dir}</span>`:""}${knobSVG(p==null?null:+p,!!h)}<div class="kv">${h?`${h.dir} ${esc(h.amt||"")}`:esc(v||"")}</div><div class="kl">${esc(l)}</div></div>`}).join("")}</div>
+     ${here.filter(a=>!(sl.knobs||[]).some(x=>new RegExp(a.knob,"i").test(x[0]))).map(a=>`<div class="extra"><b>${esc(a.knob.split("|")[0])} ${esc(a.dir)} ${esc(a.amt||"")}</b></div>`).join("")}
+     ${sl.extra?`<div class="extra">${esc(sl.extra)}</div>`:""}
+     <p class="muted" style="margin-top:10px">${mine||unknown?"Your settings aren't visible to the app. The arrow shows which way to turn, from wherever it is now.":"Starting values for this idea chain. Set them close, then follow the arrows."}</p>`}
+  const advHTML=adv==null?`<div class="hint" style="margin:0 0 14px">Moves show up here after you compare.</div>`:
+    adv.length?`<div class="advice">${adv.map((a,i)=>{const kk=KIND[a.kind]||KIND.utility;const where=a.slot?ch.strips[a.slot[0]].name:"";
+      return `<button class="adv" data-adv="${i}"><span class="num">${i+1}</span><i style="background:${kk[0]}"></i><span><b>${esc(a.plugin)} · ${esc(a.knob.split("|")[0])} ${esc(a.dir)} ${esc(a.amt||"")}</b><small>${where&&ch.strips.length>1?esc(where)+" · ":""}${esc(a.why)}</small></span></button>`}).join("")}</div>`:
     `<div class="hint" style="margin:0 0 14px;color:var(--good)">✓ Everything is within range of the target. Trust your ears now.</div>`;
-  el.innerHTML=`<h2><span class="n">4</span>Fix</h2><p class="sub">${adv&&adv.length?"Do these in Logic, in order. Numbers on the strip show where.":"Your plugin chain."}</p>
-   <div class="row" style="margin-bottom:12px"><label class="muted">Chain <select id="chain-sel">${chains.map(x=>`<option value="${esc(x.id)}" ${x.id===ch.id?"selected":""}>${esc(x.name)}</option>`).join("")}</select></label>
-     ${(ch.tips||[]).map(t=>`<span class="muted">· ${esc(t)}</span>`).join("")}</div>
-   ${advHTML}
-   <div class="fix"><div class="mixer">${mixer}</div><div class="detail">${detail}</div></div>
+  el.innerHTML=`<h2><span class="n">4</span>Fix</h2>
+   <div class="row" style="margin:6px 0 12px"><select id="chain-sel" aria-label="Chain">
+     ${myList.length?`<optgroup label="My chains (what's in Logic)">${myList.map(x=>`<option value="${esc(x.id)}" ${x.id===ch.id?"selected":""}>${esc(x.name)}</option>`).join("")}</optgroup>`:""}
+     <optgroup label="Ideas to borrow">${ideas.map(x=>`<option value="${esc(x.id)}" ${x.id===ch.id?"selected":""}>${esc(x.name)}</option>`).join("")}</optgroup></select>
+     ${mine?(ed?"":`<button class="btn" id="edit-chain">✎ Edit</button>`):`<button class="btn" id="dup-chain">Copy to My chains</button>`}<button class="btn" id="new-chain">+ New chain</button></div>
+   ${mine?"":`<div class="hint" style="margin:0 0 12px">💡 This is an <b>idea</b> chain, not what's in your Logic. Pick <b>My chain</b> so the moves land on your real plugins.</div>`}
+   ${ed?"":advHTML}
+   <div class="fix"><div class="mixer ${ed?"editing":""}">${mixer}</div><div class="detail">${detail}</div></div>
    <div class="chk"><h2 style="margin:0"><span class="n">5</span>Check</h2><span class="muted">Changed something in Logic?</span>
      <button class="btn rec" data-cap="you" ${!c.target?"disabled":""}>● Listen again</button>
      <button class="btn" id="copy-claude" ${!rows?"disabled":""}>Copy for Claude</button><span class="muted" id="copied"></span></div>
-   <details><summary>Get a new chain from Claude</summary>
-     <div class="row" style="margin-top:8px"><input class="txt" id="ask" style="flex:1;min-width:220px" placeholder="e.g. Nile Rodgers funk rhythm guitar"><button class="btn" id="ask-copy">Copy request</button></div>
-     <textarea id="paste" placeholder="Paste Claude's answer here (the part in curly braces)"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="paste-load">Add chain</button><span class="muted" id="paste-msg"></span></div></details>`;
+   <details><summary>Fill a chain from a screenshot, or get a new sound idea (via Claude)</summary>
+     <div class="row" style="margin-top:8px"><input class="txt" id="ask" style="flex:1;min-width:220px" placeholder="A sound you want, or leave empty for 'my screenshot'"><button class="btn" id="ask-copy">Copy request</button></div>
+     <textarea id="paste" placeholder="Paste Claude's answer here (the part in curly braces)"></textarea><div class="row" style="margin-top:6px"><button class="btn" id="paste-load">Add to My chains</button><span class="muted" id="paste-msg"></span></div></details>`;
   bindCommon(el);
-  $("chain-sel").onchange=e=>{C().chain=e.target.value;S.sel=[0,0];S.userPicked=false;render()};
+  const re=()=>{saveChains();renderFix()};
+  $("chain-sel").onchange=e=>{C().chain=e.target.value;S.sel=[0,0];S.userPicked=false;S.edit=false;render()};
+  const ec=$("edit-chain");if(ec)ec.onclick=()=>{S.edit=true;renderFix()};
+  const dc=$("dup-chain");if(dc)dc.onclick=()=>{newChainFrom(ch);S.edit=true;render()};
+  $("new-chain").onclick=()=>{newChainFrom(null);S.edit=true;render()};
+  if(ed){$("edit-done").onclick=()=>{S.edit=false;saveChains();render()};
+    $("chain-del").onclick=()=>{S.userChains.splice(S.userChains.indexOf(ch),1);saveChains();C().chain=(S.userChains.find(x=>x.ctx===S.ctx)||ideas[0]).id;S.edit=false;render()};
+    $("chain-name").onchange=e=>{ch.name=e.target.value||"My chain";re()};
+    el.querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{const [si,i,d]=b.dataset.mv.split(",").map(Number),a=ch.strips[si].slots,j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];re()});
+    el.querySelectorAll("[data-rm]").forEach(b=>b.onclick=()=>{const [si,i]=b.dataset.rm.split(",").map(Number);ch.strips[si].slots.splice(i,1);re()});
+    el.querySelectorAll("[data-add]").forEach(s=>s.onchange=()=>{if(s.value){ch.strips[+s.dataset.add].slots.push(slotFromLib(s.value));re()}});
+    el.querySelectorAll("[data-sname]").forEach(i=>i.onchange=()=>{ch.strips[+i.dataset.sname].name=i.value||"Strip";saveChains()});
+    el.querySelectorAll("[data-sout]").forEach(i=>i.onchange=()=>{ch.strips[+i.dataset.sout].out=i.value;saveChains()});
+    el.querySelectorAll("[data-rms]").forEach(b=>b.onclick=()=>{ch.strips.splice(+b.dataset.rms,1);S.sel=[0,0];re()});
+    $("add-strip").onclick=()=>{ch.strips.push({name:"Aux",slots:[]});re()}}
   el.querySelectorAll(".slot[data-s]").forEach(b=>b.onclick=()=>{S.sel=[+b.dataset.s,+b.dataset.i];S.userPicked=true;renderFix()});
   el.querySelectorAll("[data-adv]").forEach(b=>b.onclick=()=>{const a=adv[+b.dataset.adv];if(a.slot){S.sel=a.slot;S.userPicked=true;renderFix()}});
   $("copy-claude").onclick=async()=>{try{await navigator.clipboard.writeText(claudeReport(rows,adv,take));$("copied").textContent="Copied. Paste it in Claude, with a screenshot of your plugins if you like."}catch(e){$("copied").textContent="Copy blocked."}};
-  $("ask-copy").onclick=async()=>{const want=$("ask").value.trim()||"[describe the sound]";
-    try{await navigator.clipboard.writeText(`Design this sound in Logic Pro using only stock plugins: ${want}.\nReply with ONLY a JSON object like this (knob number = knob position 0–1; 2–5 knobs per plugin; very short text):\n{"name":"Short name","tips":["max 3 short tips"],"strips":[{"name":"Guitar","slots":[{"plugin":"Plugin name","kind":"dynamics|drive|amp|eq|modulation|delay|reverb|limiter|utility","role":"max 6 words","knobs":[["Label","value",0.5]],"extra":"optional short line"}],"sends":[["Bus 1 → Reverb","-10 dB"]]},{"name":"Aux 1 · Reverb","slots":[]}]}`);$("paste-msg").textContent="Copied. Paste it into Claude."}catch(e){$("paste-msg").textContent="Copy blocked."}};
+  $("ask-copy").onclick=async()=>{const want=$("ask").value.trim();
+    const head=want?`Design this sound in Logic Pro using only stock plugins: ${want}.`:`I'm attaching a screenshot of my Logic Pro mixer. Turn the channel strips into this format (plugins top to bottom, in order).`;
+    try{await navigator.clipboard.writeText(`${head}\nReply with ONLY a JSON object like this (knob number = knob position 0–1, or null if unknown; very short text):\n{"name":"Short name","tips":["max 3 short tips"],"strips":[{"name":"Guitar","out":"Bus 5","slots":[{"plugin":"Plugin name","kind":"dynamics|drive|amp|eq|modulation|delay|reverb|limiter|utility","role":"max 6 words","knobs":[["Label","value",0.5]]}],"sends":[["Bus 7 → Mod FX",""]]}]}`);$("paste-msg").textContent=want?"Copied. Paste it into Claude.":"Copied. Paste it into Claude together with your screenshot."}catch(e){$("paste-msg").textContent="Copy blocked."}};
   $("paste-load").onclick=()=>{const raw=$("paste").value,a=raw.indexOf("{"),b=raw.lastIndexOf("}");
-    try{const p=JSON.parse(raw.slice(a,b+1));if(!p.strips||!p.strips[0]||!p.strips[0].slots||!p.strips[0].slots.length)throw 0;
-      p.id="c"+Date.now();p.ctx=S.ctx;p.name=p.name||"My chain";S.userChains.push(p);store.set("md.chains",S.userChains);C().chain=p.id;S.sel=[0,0];render()}
+    try{const p=JSON.parse(raw.slice(a,b+1));if(!p.strips||!p.strips[0]||!p.strips[0].slots)throw 0;
+      p.strips.forEach(s=>s.slots.forEach(x=>{const lib=LIB.find(l=>l[0].toLowerCase()===String(x.plugin).toLowerCase());if(!x.kind&&lib)x.kind=lib[1];if((!x.knobs||!x.knobs.length)&&lib)x.knobs=lib[2].map(k=>[k,"",null])}));
+      p.id="c"+Date.now();p.ctx=S.ctx;p.name=p.name||"My chain";S.userChains.unshift(p);saveChains();C().chain=p.id;S.sel=[0,0];render()}
     catch(e){$("paste-msg").textContent="That doesn't look like a chain from Claude. Paste the whole answer."}}}
 function claudeReport(rows,adv,take){const c=C(),ch=curChain();
   return [`Mix Doctor · ${S.ctx==="tone"?"Match a sound":"Check my mix"}`,`Target: ${c.target.name}`,`${take.name}: ${take.score}% close`,"",
