@@ -290,8 +290,38 @@ DAFT_ROBOT = {
         ]},
     ],
 }
+# "Like a liquid squirming, the sound when you open a yogurt" for guitar chords: a vowel filter
+# that squelches open on every strum with a random squirm, liquid vibrato, gloopy comb delays,
+# grain bubbles and a dripping resonance. One serial chain, each stage blended.
+YOGURT = {
+    "name": "Yogurt",
+    # soft and controlled (user): gentle resonance, short tails, small amounts
+    "macros": [("Squelch", 60), ("Squirm", 25), ("Wobble", 40), ("Goo", 25),
+               ("Bubbles", 22), ("Drip", 15)],
+    "chains": [
+        {"name": "Liquid chords", "devices": [
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Even strums",
+             "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 100, "Gain": 0}},
+            {"preset": "Auto Filter/Vocal Quivver", "label": "Squelch",
+             "set": {"Envelope_Release": 0.5, "Lfo_Frequency": 3, "Filter_Resonance": 0.4, "DryWet": 0.7},
+             "macros": {"Envelope_Amount": (0, 0, 1), "Lfo_Amount": (1, 0, 0.5)}},
+            {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Liquid wobble",
+             "set": {"Rate": 1.0},
+             "macros": {"DryWet": (2, 0, 1)}},
+            {"preset": "Echo/Modulated Delay/Liqourice Whip", "label": "Goo",
+             "set": {"Feedback": 0.35, "InputGain": 0, "Noise_On": False},
+             "macros": {"DryWet": (3, 0, 0.6)}},
+            {"preset": "Grain Delay/Bubbles", "label": "Bubbles",
+             "set": {"Feedback": 0.2},
+             "macros": {"NewDryWet": (4, 0, 0.6)}},
+            {"preset": "Spectral Resonator/Dripping Grains", "label": "Drip",
+             "set": {"DecayDamping_DecayTime": 1.2},
+             "macros": {"Global_DryWet": (5, 0, 0.5)}},
+        ]},
+    ],
+}
 RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
-         "daft-robot": DAFT_ROBOT}
+         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT}
 
 
 def main():
