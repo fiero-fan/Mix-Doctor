@@ -440,36 +440,34 @@ _s["devices"][1]["set"].update({"Filter_Frequency": 4500})             # brighte
 # as the chord fades (Echo ducking). No drive, no dark low-pass on the guitar itself.
 YOGURT_POUR = {
     "name": "Yogurt Pour",
-    # levels lowered after the first listen: three lanes + thud on a hot guitar clipped hard
-    "macros": [("Guitar", 72), ("Gloop", 95), ("Gloop speed", 60), ("Accelerate", 100),
-               ("Thud", 25), ("Tail", 115), ("Tail pitch", 64), ("Tail repeats", 64)],
+    # v3 after "sounds like cosmic wind, full of rumble": only the pick attack feeds the gloop lane
+    # (gated short), so each echo is a separate droplet with silence around it; tighter resonant
+    # gloops, fewer repeats, no chorus wash; thud off and high-passes against rumble.
+    "macros": [("Guitar", 72), ("Gloop", 100), ("Gloop speed", 60), ("Accelerate", 100),
+               ("Drops", 64), ("Tail", 115), ("Tail pitch", 64), ("Tail repeats", 64)],
     "chains": [
         {"name": "Guitar", "volume_macro": 0, "devices": [
             {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
              "set": {"Threshold": 0.2, "Ratio": 2.5, "Attack": 15, "Release": 150, "Gain": 0}},
-            {"preset": "Drum Buss/Boom in A", "label": "Heavy soft landing",
-             "set": {"EnableCompression": False, "DriveAmount": 0, "CrunchAmount": 0, "InputTrim": 1,
-                     "OutputGain": 1, "DampingFrequency": 18000, "BoomFrequency": 55, "BoomDecay": 0.4,
-                     "TransientShaping": -0.3, "DryWet": 1},
-             "macros": {"BoomAmount": (4, 0, 0.6)}},
+            {"preset": "Auto Filter/Cut-O-Move HPF", "label": "No rumble",
+             "set": {"Filter_Frequency": 110, "Filter_Resonance": 0.1, "Lfo_Amount": 0, "Envelope_Amount": 0,
+                     "DryWet": 1}},
         ]},
-        # "gloop-gloo-gloo-gloo, faster and higher": each repeat is a resonant gloop, and the echo's
-        # delay time follows the chord's loudness (envelope modulation) with re-pitch on, so as the
-        # chord fades the repeats get shorter (faster) and rise in pitch, like a tape speeding up
         {"name": "Gloop", "volume_macro": 1, "devices": [
-            {"preset": "Auto Filter/Band-pass Spinner", "label": "Each repeat a gloop",
-             "set": {"Filter_Frequency": 500, "Filter_Resonance": 0.55, "Lfo_Amount": 0, "Envelope_Amount": 0.8,
-                     "Envelope_Attack": 0.001, "Envelope_Release": 0.12, "Envelope_HoldOn": False, "DryWet": 1}},
+            {"preset": "Gate/Soft Reducer", "label": "Only the pick",
+             "set": {"Attack": 0.1, "Hold": 20, "Release": 35, "Return": 3, "Gain": 0},
+             "macros": {"Threshold": (4, 0.6, 0.05)}},
+            {"preset": "Auto Filter/Band-pass Spinner", "label": "Each drop a gloop",
+             "set": {"Filter_Frequency": 600, "Filter_Resonance": 0.7, "Lfo_Amount": 0, "Envelope_Amount": 0.8,
+                     "Envelope_Attack": 0.001, "Envelope_Release": 0.08, "Envelope_HoldOn": False, "DryWet": 1}},
             {"preset": "Echo/Vintage Delay/Long Tape", "label": "Faster and higher",
              "set": {"Delay_SyncL": False, "Delay_SyncR": False, "Delay_TimeLink": True, "Delay_TimeR": 0.25,
-                     "Delay_Repitch": True, "Delay_RepitchSmoothingTime": 0.3, "Feedback": 0.75,
+                     "Delay_Repitch": True, "Delay_RepitchSmoothingTime": 0.1, "Feedback": 0.55,
                      "Modulation_EnvelopeMix": 1, "Modulation_AmountDelayTimesFour": True,
                      "Modulation_AmountFilter": 0, "Noise_On": False, "Wobble_On": False, "Reverb_Level": 0,
-                     "Gate_On": False, "Ducking_On": False, "Filter_HighPassFrequency": 200,
-                     "Filter_LowPassFrequency": 8000, "InputGain": 0, "OutputGain": 1, "DryWet": 1},
+                     "Gate_On": False, "Ducking_On": False, "Filter_HighPassFrequency": 400,
+                     "Filter_LowPassFrequency": 9000, "InputGain": 0, "OutputGain": 1, "DryWet": 1},
              "macros": {"Delay_TimeL": (2, 0.45, 0.1), "Modulation_AmountDelay": (3, 0, 1)}},
-            {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Viscous flow",
-             "set": {"Rate": 0.6, "DryWet": 0.4}},
         ]},
         {"name": "High tail", "volume_macro": 5, "devices": [
             {"preset": "Shifter/Wobbly Octave Down", "label": "Up high",
