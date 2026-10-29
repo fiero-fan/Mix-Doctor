@@ -167,7 +167,7 @@ ROCKET_NOTES = {
         {"name": "Guitar", "volume_macro": 0, "devices": []},
         {"name": "Rocket", "volume_macro": 1, "devices": [
             {"preset": "Gate/Soft Reducer", "label": "Silence between notes",
-             "set": {"Gain": 0, "Release": 150},
+             "set": {"Gain": -75, "Release": 150},
              "macros": {"Threshold": (6, 0.003, 0.1)}},
             {"preset": "Roar/Bass Fuzz", "label": "Engine roar",
              "macros": {"Input_InputGain": (4, 1.0, 3.16)}},
@@ -196,7 +196,7 @@ ROCKET_BLEND = {
     "chains": [
         {"name": "Rocket guitar", "devices": [
             {"preset": "Gate/Soft Reducer", "label": "Quiet between notes",
-             "set": {"Gain": 0, "Release": 200},
+             "set": {"Gain": -75, "Release": 200},
              "macros": {"Threshold": (6, 0.003, 0.1)}},
             {"preset": "Compressor/Sustained Lead Vocal", "label": "Even notes",
              "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 200, "Gain": 0}},
@@ -455,7 +455,7 @@ YOGURT_POUR = {
         ]},
         {"name": "Gloop", "volume_macro": 1, "devices": [
             {"preset": "Gate/Soft Reducer", "label": "Only the pick",
-             "set": {"Attack": 0.1, "Hold": 20, "Release": 35, "Return": 3, "Gain": 0},
+             "set": {"Attack": 0.1, "Hold": 20, "Release": 35, "Return": 3, "Gain": -75},  # Gain = floor
              "macros": {"Threshold": (4, 0.6, 0.05)}},
             {"preset": "Auto Filter/Band-pass Spinner", "label": "Each drop a gloop",
              "set": {"Filter_Frequency": 600, "Filter_Resonance": 0.7, "Lfo_Amount": 0, "Envelope_Amount": 0.8,
