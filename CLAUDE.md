@@ -36,6 +36,7 @@ Full-song references (YouTube targets by default) are judged on the guitar range
 - Rack pitfalls already fixed in the builder: devices need `Id`; the shell's chain-select zones faded in; the shell mapped chain volume to macro 8 (silenced everything). Leave macro mappings only on what we set.
 - Shifter's envelope pitch is level-sensitive: hotter input needs less Climb, or pitch parks low and growls. Tune by recording BlackHole and turning macros via `tools/live.py`. The bridge only reaches top-level devices, so put anything we may tune on a macro.
 - Live's audio output must be "Main Output" for BlackHole to hear it (a restart once switched it to the headphones).
+- Latency while playing live: keep Options > "Reduced Latency When Monitoring" on (pitch shifters, Auto Shift and vocoders elsewhere in the set otherwise delay the monitored track). Buffer is already 32 samples.
 - Measure one track at a time: nothing is soloed by default, so pause the other clips (stop_clip, record, fire_clip) or the beat pollutes the numbers.
 
 ## Recipes the user loved
