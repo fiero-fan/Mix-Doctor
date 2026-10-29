@@ -441,8 +441,8 @@ _s["devices"][1]["set"].update({"Filter_Frequency": 4500})             # brighte
 YOGURT_POUR = {
     "name": "Yogurt Pour",
     # levels lowered after the first listen: three lanes + thud on a hot guitar clipped hard
-    "macros": [("Guitar", 88), ("Gloop", 82), ("Glug rate", 40), ("Glug depth", 115),
-               ("Thud", 25), ("Tail", 92), ("Tail pitch", 64), ("Tail repeats", 64)],
+    "macros": [("Guitar", 72), ("Gloop", 95), ("Gloop speed", 60), ("Accelerate", 100),
+               ("Thud", 25), ("Tail", 115), ("Tail pitch", 64), ("Tail repeats", 64)],
     "chains": [
         {"name": "Guitar", "volume_macro": 0, "devices": [
             {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
@@ -453,16 +453,23 @@ YOGURT_POUR = {
                      "TransientShaping": -0.3, "DryWet": 1},
              "macros": {"BoomAmount": (4, 0, 0.6)}},
         ]},
+        # "gloop-gloo-gloo-gloo, faster and higher": each repeat is a resonant gloop, and the echo's
+        # delay time follows the chord's loudness (envelope modulation) with re-pitch on, so as the
+        # chord fades the repeats get shorter (faster) and rise in pitch, like a tape speeding up
         {"name": "Gloop", "volume_macro": 1, "devices": [
-            {"preset": "Auto Filter/Resampling Filter S&H", "label": "Glug glug",
-             "set": {"Filter_Type": 2, "Filter_Frequency": 700, "Filter_Resonance": 0.45, "Lfo_Waveform": 7,
-                     "Lfo_TimeMode": 0, "Lfo_Smoothing": 1, "Envelope_Amount": 0.3, "DryWet": 1},
-             "macros": {"Lfo_Frequency": (2, 1.5, 8), "Lfo_Amount": (3, 0, 0.4)}},
+            {"preset": "Auto Filter/Band-pass Spinner", "label": "Each repeat a gloop",
+             "set": {"Filter_Frequency": 500, "Filter_Resonance": 0.55, "Lfo_Amount": 0, "Envelope_Amount": 0.8,
+                     "Envelope_Attack": 0.001, "Envelope_Release": 0.12, "Envelope_HoldOn": False, "DryWet": 1}},
+            {"preset": "Echo/Vintage Delay/Long Tape", "label": "Faster and higher",
+             "set": {"Delay_SyncL": False, "Delay_SyncR": False, "Delay_TimeLink": True, "Delay_TimeR": 0.25,
+                     "Delay_Repitch": True, "Delay_RepitchSmoothingTime": 0.3, "Feedback": 0.75,
+                     "Modulation_EnvelopeMix": 1, "Modulation_AmountDelayTimesFour": True,
+                     "Modulation_AmountFilter": 0, "Noise_On": False, "Wobble_On": False, "Reverb_Level": 0,
+                     "Gate_On": False, "Ducking_On": False, "Filter_HighPassFrequency": 200,
+                     "Filter_LowPassFrequency": 8000, "InputGain": 0, "OutputGain": 1, "DryWet": 1},
+             "macros": {"Delay_TimeL": (2, 0.45, 0.1), "Modulation_AmountDelay": (3, 0, 1)}},
             {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Viscous flow",
-             "set": {"Rate": 0.6, "DryWet": 0.5}},
-            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Soft edges",
-             "set": {"Filter_Frequency": 7000, "Filter_Resonance": 0.1, "Lfo_Amount": 0,
-                     "Envelope_Amount": 0, "DryWet": 1}},
+             "set": {"Rate": 0.6, "DryWet": 0.4}},
         ]},
         {"name": "High tail", "volume_macro": 5, "devices": [
             {"preset": "Shifter/Wobbly Octave Down", "label": "Up high",
