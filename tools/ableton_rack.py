@@ -326,16 +326,25 @@ YOGURT = {
 # Tail lane is effect-only (no dry): shimmer echoes -> photon ray -> octave-shimmer space.
 YOGURT_DROP = {
     "name": "Yogurt Drop",
-    "macros": [("Plop", 70), ("Drop", 30), ("Wobble", 35), ("Cosmos", 88),
-               ("Ray", 55), ("Tail", 60)],
+    "macros": [("Plooah", 127), ("Drop", 30), ("Wobble", 35), ("Cosmos", 88),
+               ("Ray", 55), ("Tail", 60), ("Pop", 60), ("Pl", 50), ("Flutter", 55)],
     "chains": [
         {"name": "Body", "devices": [
             {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
              "set": {"Threshold": 0.15, "Ratio": 3, "Attack": 10, "Release": 150, "Gain": 0}},
-            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Plop",
-             "set": {"Filter_Frequency": 700, "Filter_Resonance": 0.3, "Lfo_Amount": 0,
-                     "Envelope_Attack": 0.005, "Envelope_Release": 0.6, "DryWet": 1},
-             "macros": {"Envelope_Amount": (0, 0, 0.8)}},
+            # "pl-": Drum Buss' Boom fires a short low pop (tuned to A, the loop's key) on every
+            # attack, Transients sharpen the pick; drive and compression off to stay soft
+            {"preset": "Drum Buss/Boom in A", "label": "Pl- pop",
+             "set": {"EnableCompression": False, "DriveAmount": 0.1, "CrunchAmount": 0, "InputTrim": 1,
+                     "OutputGain": 1, "DampingFrequency": 9000, "BoomFrequency": 55, "BoomDecay": 0.25,
+                     "DryWet": 1},
+             "macros": {"BoomAmount": (6, 0, 0.8), "TransientShaping": (7, 0, 0.8)}},
+            # "plooah": vowel filter, envelope negative -> each strum starts closed ("oo")
+            # and opens into "ah" as the envelope releases
+            {"preset": "Auto Filter/Vocal Quivver", "label": "Plooah",
+             "set": {"Filter_Frequency": 5000, "Filter_Resonance": 0.5, "Lfo_Amount": 0,
+                     "Envelope_Attack": 0.005, "Envelope_Release": 1.2, "DryWet": 0.9},
+             "macros": {"Envelope_Amount": (0, 0, -0.9)}},
             {"preset": "Shifter/Wobbly Octave Down", "label": "Falling dollop",
              "set": {"Global_ShifterMode": 0, "Pitch_Coarse": 0, "Pitch_Fine": 0, "Lfo_Amount": 0,
                      "Lfo_AmountPitch": 0, "Lfo_SpinOn": False, "Delay_On": False,
@@ -345,6 +354,12 @@ YOGURT_DROP = {
             {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Gloopy wobble",
              "set": {"Rate": 0.8},
              "macros": {"DryWet": (2, 0, 0.8)}},
+            # very fast, quickly fading repeats (45 / 60 ms): the yogurt rippling after the drop
+            {"preset": "Echo/Clean Delay/Slapback", "label": "Ripple",
+             "set": {"Delay_SyncL": False, "Delay_SyncR": False, "Delay_TimeLink": False,
+                     "Delay_TimeL": 0.045, "Delay_TimeR": 0.06, "Feedback": 0.5,
+                     "Filter_LowPassFrequency": 5000, "Noise_On": False, "Wobble_On": False},
+             "macros": {"DryWet": (8, 0, 0.6)}},
         ]},
         {"name": "Cosmic tail", "volume_macro": 3, "devices": [
             {"preset": "Echo/Ambient Spaces/Shimmery", "label": "Shimmer echoes",
