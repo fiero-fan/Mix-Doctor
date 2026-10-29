@@ -31,6 +31,7 @@ Full-song references (YouTube targets by default) are judged on the guitar range
 - Sets live in `~/AI/Ableton 2026/` (e.g. `project vibe coding Project/`). `.als` files are gzipped XML: read them to see saved tracks, routing and devices.
 - `tools/ableton_rack.py rocket` writes Audio Effect Racks (.adg) into `~/Music/Ableton/User Library/Presets/Audio Effects/Audio Effect Rack/Mix Doctor/`, built from Live's factory presets.
 - Live control: ableton-mcp (reviewed, pinned clone in `~/AI/ableton-mcp`, telemetry and dataset off) via `.mcp.json` (not committed). Remote Script in `User Library/Remote Scripts/AbletonMCP`; select AbletonMCP as Control Surface in Live. `tools/live.py` talks to it directly (port 9877).
+- Local patch to the Remote Script Live runs (User Library/Remote Scripts/AbletonMCP): a `delete_device` command (track_index, device_index). Reinstalling or updating ableton-mcp removes it; re-add it if needed.
 - Live's log: `~/Library/Preferences/Ableton/Live 12.4.15/Log.txt` (load errors, script messages).
 - Racks: `rocket` (first try), `rocket-notes` (clean + rocket in parallel), `rocket-blend` (the keeper: one serial chain, each device blends dry/wet, so the guitar sits inside the effect). The user prefers blended over "source + shadow".
 - Rack pitfalls already fixed in the builder: devices need `Id`; the shell's chain-select zones faded in; the shell mapped chain volume to macro 8 (silenced everything). Leave macro mappings only on what we set.
