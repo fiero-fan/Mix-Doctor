@@ -433,9 +433,52 @@ _g["devices"][1]["set"].update({"TransientShaping": 0.7, "DriveAmount": 0.3, "Cr
 _b["devices"][0]["macros"]["Envelope_Release"] = (2, 0.02, 0.12)       # faster, shorter chirp
 _s["devices"][0]["set"].update({"LevelGate": -35, "EnvelopeRelease": 60, "OutputGain": 3})
 _s["devices"][1]["set"].update({"Filter_Frequency": 4500})             # brighter splatter
+# "Slowly pouring a 10 kg can of yogurt from 3 m into a pool of Greek yogurt; then a high-pitched
+# delay on the tail; very clear and soft, not muffled or distorted." The strum is the pour hitting
+# the pool (soft heavy gloop), the ringing chord is the stream folding into the pool (slow,
+# irregular glug: smoothed-random resonant band-pass), and the tail is a +12 delay that only blooms
+# as the chord fades (Echo ducking). No drive, no dark low-pass on the guitar itself.
+YOGURT_POUR = {
+    "name": "Yogurt Pour",
+    "macros": [("Guitar", 108), ("Gloop", 100), ("Glug rate", 40), ("Glug depth", 70),
+               ("Thud", 45), ("Tail", 95), ("Tail pitch", 64), ("Tail repeats", 64)],
+    "chains": [
+        {"name": "Guitar", "volume_macro": 0, "devices": [
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
+             "set": {"Threshold": 0.2, "Ratio": 2.5, "Attack": 15, "Release": 150, "Gain": 0}},
+            {"preset": "Drum Buss/Boom in A", "label": "Heavy soft landing",
+             "set": {"EnableCompression": False, "DriveAmount": 0, "CrunchAmount": 0, "InputTrim": 1,
+                     "OutputGain": 1, "DampingFrequency": 18000, "BoomFrequency": 55, "BoomDecay": 0.4,
+                     "TransientShaping": -0.3, "DryWet": 1},
+             "macros": {"BoomAmount": (4, 0, 0.6)}},
+        ]},
+        {"name": "Gloop", "volume_macro": 1, "devices": [
+            {"preset": "Auto Filter/Resampling Filter S&H", "label": "Glug glug",
+             "set": {"Filter_Type": 2, "Filter_Frequency": 700, "Filter_Resonance": 0.45, "Lfo_Waveform": 7,
+                     "Lfo_TimeMode": 0, "Lfo_Smoothing": 1, "Envelope_Amount": 0.3, "DryWet": 1},
+             "macros": {"Lfo_Frequency": (2, 1.5, 8), "Lfo_Amount": (3, 0, 0.4)}},
+            {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Viscous flow",
+             "set": {"Rate": 0.6, "DryWet": 0.5}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Soft edges",
+             "set": {"Filter_Frequency": 7000, "Filter_Resonance": 0.1, "Lfo_Amount": 0,
+                     "Envelope_Amount": 0, "DryWet": 1}},
+        ]},
+        {"name": "High tail", "volume_macro": 5, "devices": [
+            {"preset": "Shifter/Wobbly Octave Down", "label": "Up high",
+             "set": {"Global_ShifterMode": 0, "Pitch_Fine": 0, "Lfo_Amount": 0, "Lfo_AmountPitch": 0,
+                     "Lfo_SpinOn": False, "Delay_On": False, "Global_DryWet": 1},
+             "macros": {"Pitch_Coarse": (6, 0, 24)}},
+            {"preset": "Echo/Clean Delay/Simple Long Digi Delay", "label": "Blooms as the chord fades",
+             "set": {"Ducking_On": True, "Ducking_Threshold": -30, "Ducking_Release": 0.4,
+                     "Wobble_On": False, "Noise_On": False, "Filter_HighPassFrequency": 800,
+                     "Filter_LowPassFrequency": 12000, "DryWet": 1},
+             "macros": {"Feedback": (7, 0.2, 0.8)}},
+        ]},
+    ],
+}
 RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
          "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP, "yogurt-plop": YOGURT_PLOP,
-         "greek-splat": GREEK_SPLAT}
+         "greek-splat": GREEK_SPLAT, "yogurt-pour": YOGURT_POUR}
 
 
 def main():
