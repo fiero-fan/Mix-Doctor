@@ -15,6 +15,7 @@ import numpy as np
 from scipy.signal import medfilt
 from mix_doctor import load_audio
 from live import call
+import vocal_to_midi
 
 NAMES = "C C# D D# E F F# G G# A A# B".split()
 
@@ -87,16 +88,26 @@ def main():
     p.add_argument("--high", type=int, default=64, help="highest MIDI note you sing (Live: 64 = E3)")
     p.add_argument("--synth", default="Bright SAW Lead.adv", help="a preset in Sounds > Synth Lead")
     p.add_argument("--gate", type=float, default=-120,
-                   help="ignore audio quieter than this (dB). Default: off, which also catches word tails,"
-                        " the version the user liked; try -42 for fewer, cleaner notes")
+                   help="simple method only: ignore audio quieter than this (dB)")
+    p.add_argument("--method", choices=["pyin", "simple"], default="pyin",
+                   help="pyin: tools/vocal_to_midi.py, real timing, with an accuracy score (default). "
+                        "simple: the first version, 16th grid")
+    p.add_argument("--grid", type=float, help="pyin: snap to this many beats (0.25 = 16ths). Default: your real timing")
+    p.add_argument("--key", help="pyin: snap pitches into a key, e.g. A:minor")
+    p.add_argument("--name", default="Your melody", help="name for the new clip")
     a = p.parse_args()
     bpm = call("get_session_info")["result"]["tempo"]
-    x, sr = load_audio(a.audio)
-    beats = a.beats or round(len(x) / sr / (60 / bpm) * 4) / 4
-    notes = transcribe(a.audio, bpm, a.low, a.high, beats, a.gate)
     v = track_named(a.voice_track)
     if v is None:
         raise SystemExit(f"No track called {a.voice_track!r} in the open set.")
+    voice_clip = call("get_track_info", track_index=v)["result"]["clip_slots"][a.voice_slot - 1].get("clip") or {}
+    x, sr = load_audio(a.audio)
+    beats = a.beats or voice_clip.get("length") or round(len(x) / sr / (60 / bpm) * 4) / 4
+    if a.method == "pyin":
+        notes, rep = vocal_to_midi.transcribe(a.audio, bpm, a.grid, vocal_to_midi.parse_key(a.key), beats)
+        print(f"accuracy {rep['accuracy']:.0f}% of sung time within 50 cents, notes cover {rep['coverage']:.0f}% of the singing")
+    else:
+        notes = transcribe(a.audio, bpm, a.low, a.high, beats, a.gate)
     t = track_named("Robot Carrier")
     if t is None:
         t = v + 1
@@ -116,7 +127,7 @@ def main():
     slot = next((s["index"] for s in slots if not s["has_clip"]), len(slots))
     call("create_clip", track_index=t, clip_index=slot, length=beats)
     call("add_notes_to_clip", track_index=t, clip_index=slot, notes=notes)
-    call("set_clip_name", track_index=t, clip_index=slot, name="Your melody")
+    call("set_clip_name", track_index=t, clip_index=slot, name=a.name)
     call("fire_clip", track_index=t, clip_index=slot)
     call("fire_clip", track_index=v, clip_index=a.voice_slot - 1)
     print(f"{len(notes)} notes at {bpm:g} BPM into Robot Carrier (track {t + 1}, slot {slot + 1}):")
