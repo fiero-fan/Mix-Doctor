@@ -320,8 +320,45 @@ YOGURT = {
         ]},
     ],
 }
+# "Yogurt falling on other yogurt, with a cosmic-ray vibe on the tail", soft and controlled.
+# Body: a dark low-pass that plops open on each strum and a pitch that dips down like a
+# falling dollop (Shifter: up with the attack's envelope, sliding back as the chord decays).
+# Tail lane is effect-only (no dry): shimmer echoes -> photon ray -> octave-shimmer space.
+YOGURT_DROP = {
+    "name": "Yogurt Drop",
+    "macros": [("Plop", 70), ("Drop", 30), ("Wobble", 35), ("Cosmos", 88),
+               ("Ray", 55), ("Tail", 60)],
+    "chains": [
+        {"name": "Body", "devices": [
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
+             "set": {"Threshold": 0.15, "Ratio": 3, "Attack": 10, "Release": 150, "Gain": 0}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Plop",
+             "set": {"Filter_Frequency": 700, "Filter_Resonance": 0.3, "Lfo_Amount": 0,
+                     "Envelope_Attack": 0.005, "Envelope_Release": 0.6, "DryWet": 1},
+             "macros": {"Envelope_Amount": (0, 0, 0.8)}},
+            {"preset": "Shifter/Wobbly Octave Down", "label": "Falling dollop",
+             "set": {"Global_ShifterMode": 0, "Pitch_Coarse": 0, "Pitch_Fine": 0, "Lfo_Amount": 0,
+                     "Lfo_AmountPitch": 0, "Lfo_SpinOn": False, "Delay_On": False,
+                     "EnvelopeFollower_On": True, "EnvelopeFollower_Attack": 0.002,
+                     "EnvelopeFollower_Release": 0.4, "Global_DryWet": 0.6},
+             "macros": {"EnvelopeFollower_AmountPitch": (1, 0, 12)}},
+            {"preset": "Chorus-Ensemble/Vibrato Wobble", "label": "Gloopy wobble",
+             "set": {"Rate": 0.8},
+             "macros": {"DryWet": (2, 0, 0.8)}},
+        ]},
+        {"name": "Cosmic tail", "volume_macro": 3, "devices": [
+            {"preset": "Echo/Ambient Spaces/Shimmery", "label": "Shimmer echoes",
+             "set": {"DryWet": 1, "Noise_On": False}},
+            {"preset": "Shifter/Autonomous Photon Ray", "label": "Cosmic ray",
+             "macros": {"Global_DryWet": (4, 0, 1)}},
+            {"preset": "Hybrid Reverb/Space/Large Octave Shimmer", "label": "Space",
+             "set": {"DryWet": 1},
+             "macros": {"Algorithm_Decay": (5, 1.5, 12)}},
+        ]},
+    ],
+}
 RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
-         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT}
+         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP}
 
 
 def main():
