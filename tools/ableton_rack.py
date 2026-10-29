@@ -372,8 +372,56 @@ YOGURT_DROP = {
         ]},
     ],
 }
+# Yogurt falling on yogurt, modeled from the physics, live on guitar. Each lane is one part:
+#  Guitar: the blob, thick and soft (pick attack rounded, dark low-pass) + a low thud (Boom in A)
+#  Bloop: the collapsing air pocket, a damped band-pass that drops on the attack and chirps
+#         UP in ~0.1 s (collapsing cavities rise in pitch; thick goo = low, slow, damped)
+#  Smear: sticky spreading, noise shaped by the strum (noise-carrier vocoder), muffled and short
+#  Cosmic tail: effect-only shimmer/ray space from Yogurt Drop, low by default
+YOGURT_PLOP = {
+    "name": "Yogurt Plop",
+    "macros": [("Guitar", 100), ("Bloop", 108), ("Chirp time", 40), ("Blob size", 50),
+               ("Thud", 70), ("Smear", 80), ("Thickness", 70), ("Cosmos", 70)],
+    "chains": [
+        {"name": "Guitar", "volume_macro": 0, "devices": [
+            {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
+             "set": {"Threshold": 0.15, "Ratio": 3, "Attack": 10, "Release": 150, "Gain": 0}},
+            {"preset": "Drum Buss/Boom in A", "label": "Rounded attack + thud",
+             "set": {"EnableCompression": False, "DriveAmount": 0.05, "CrunchAmount": 0, "InputTrim": 1,
+                     "OutputGain": 1, "DampingFrequency": 4000, "BoomFrequency": 55, "BoomDecay": 0.3,
+                     "TransientShaping": -0.6, "DryWet": 1},
+             "macros": {"BoomAmount": (4, 0, 1)}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Thick",
+             "set": {"Filter_Resonance": 0.2, "Lfo_Amount": 0, "Envelope_Amount": 0, "DryWet": 1},
+             "macros": {"Filter_Frequency": (6, 8000, 900)}},
+        ]},
+        {"name": "Bloop", "volume_macro": 1, "devices": [
+            {"preset": "Auto Filter/Band-pass Spinner", "label": "Bubble chirp",
+             "set": {"Filter_Resonance": 0.6, "Lfo_Amount": 0, "Envelope_Amount": -1, "Envelope_Attack": 0,
+                     "Envelope_HoldOn": False, "DryWet": 1},
+             "macros": {"Envelope_Release": (2, 0.04, 0.3), "Filter_Frequency": (3, 1600, 350)}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Soft edges",
+             "set": {"Filter_Frequency": 2500, "Filter_Resonance": 0.1, "Lfo_Amount": 0,
+                     "Envelope_Amount": 0, "DryWet": 1}},
+        ]},
+        {"name": "Smear", "volume_macro": 5, "devices": [
+            {"preset": "Vocoder/Noise Drums", "label": "Sticky noise",
+             "set": {"LevelGate": -40, "EnvelopeRelease": 120, "OutputGain": 0, "DryWet": 1}},
+            {"preset": "Auto Filter/Cut-O-Move LPF", "label": "Muffled",
+             "set": {"Filter_Frequency": 1200, "Filter_Resonance": 0.15, "Lfo_Amount": 0,
+                     "Envelope_Amount": 0, "DryWet": 1}},
+        ]},
+        {"name": "Cosmic tail", "volume_macro": 7, "devices": [
+            {"preset": "Echo/Ambient Spaces/Shimmery", "label": "Shimmer echoes",
+             "set": {"DryWet": 1, "Noise_On": False}},
+            {"preset": "Shifter/Autonomous Photon Ray", "label": "Cosmic ray", "set": {"Global_DryWet": 0.5}},
+            {"preset": "Hybrid Reverb/Space/Large Octave Shimmer", "label": "Space",
+             "set": {"DryWet": 1, "Algorithm_Decay": 6}},
+        ]},
+    ],
+}
 RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
-         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP}
+         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP, "yogurt-plop": YOGURT_PLOP}
 
 
 def main():
