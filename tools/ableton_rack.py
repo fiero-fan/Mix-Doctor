@@ -420,8 +420,22 @@ YOGURT_PLOP = {
         ]},
     ],
 }
+# "Dense Greek yogurt violently hitting a wall": a splat, not a plop. Dense = almost no air
+# pocket (little bloop); violent = hard, fast attack and a short punchy thud; wall = a bright,
+# short slap of splatter noise, then a sticky smear. Same lanes and macro order as Yogurt Plop.
+GREEK_SPLAT = copy.deepcopy(YOGURT_PLOP)
+GREEK_SPLAT["name"] = "Greek Splat"
+GREEK_SPLAT["macros"] = [("Guitar", 100), ("Bloop", 80), ("Chirp time", 15), ("Blob size", 70),
+                         ("Thud", 95), ("Smear", 112), ("Thickness", 55), ("Cosmos", 50)]
+_g, _b, _s, _t = GREEK_SPLAT["chains"]
+_g["devices"][1]["set"].update({"TransientShaping": 0.7, "DriveAmount": 0.3, "CrunchAmount": 0.15,
+                                "BoomDecay": 0.15, "DampingFrequency": 9000})
+_b["devices"][0]["macros"]["Envelope_Release"] = (2, 0.02, 0.12)       # faster, shorter chirp
+_s["devices"][0]["set"].update({"LevelGate": -35, "EnvelopeRelease": 60, "OutputGain": 3})
+_s["devices"][1]["set"].update({"Filter_Frequency": 4500})             # brighter splatter
 RACKS = {"rocket": ROCKET, "rocket-notes": ROCKET_NOTES, "rocket-blend": ROCKET_BLEND, "robot-me": ROBOT_ME,
-         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP, "yogurt-plop": YOGURT_PLOP}
+         "daft-robot": DAFT_ROBOT, "yogurt": YOGURT, "yogurt-drop": YOGURT_DROP, "yogurt-plop": YOGURT_PLOP,
+         "greek-splat": GREEK_SPLAT}
 
 
 def main():
