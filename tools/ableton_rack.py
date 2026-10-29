@@ -440,8 +440,9 @@ _s["devices"][1]["set"].update({"Filter_Frequency": 4500})             # brighte
 # as the chord fades (Echo ducking). No drive, no dark low-pass on the guitar itself.
 YOGURT_POUR = {
     "name": "Yogurt Pour",
-    "macros": [("Guitar", 108), ("Gloop", 100), ("Glug rate", 40), ("Glug depth", 70),
-               ("Thud", 45), ("Tail", 95), ("Tail pitch", 64), ("Tail repeats", 64)],
+    # levels lowered after the first listen: three lanes + thud on a hot guitar clipped hard
+    "macros": [("Guitar", 88), ("Gloop", 82), ("Glug rate", 40), ("Glug depth", 115),
+               ("Thud", 25), ("Tail", 92), ("Tail pitch", 64), ("Tail repeats", 64)],
     "chains": [
         {"name": "Guitar", "volume_macro": 0, "devices": [
             {"preset": "Compressor/Sustained Lead Vocal", "label": "Soft and even",
