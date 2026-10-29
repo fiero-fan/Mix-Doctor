@@ -277,7 +277,7 @@ DAFT_ROBOT = {
              "set": {"Threshold": 0.15, "Ratio": 4, "Attack": 5, "Release": 100, "Gain": 0}},
             {"preset": "Vocoder/Chromatic", "label": "Synth sings, you talk",
              "set": {"CarrierSource/Type": 1, "LowFrequency": 80, "HighFrequency": 12000,
-                     "FilterBandWidth": 0.5, "Retro": False, "CarrierFlatten": False, "OutputGain": 0,
+                     "FilterBandWidth": 0.5, "Retro": False, "CarrierFlatten": False, "OutputGain": -9,
                      "EnvelopeRelease": 63, "UvdThreshold": 0.85, "MonoStereo": 1, "ModulatorAmount": 1},
              "macros": {"DryWet": (0, 0, 1), "UvdLevel": (1, 0, 1), "LevelGate": (4, -60, -20),
                         "FormantShift": (5, -12, 12)}},

@@ -44,7 +44,7 @@ Full-song references (YouTube targets by default) are judged on the guitar range
   1. `python3 tools/robot_melody.py "<voice .wav>" --voice-track voce` transcribes the sung clip into a "Robot Carrier" MIDI track (clean saw, detune and drive off).
   2. Load the **Daft Robot** rack on the voice track, then in its Vocoder set Carrier = External, source Robot Carrier; set Robot Carrier's Audio To = Sends Only.
   3. Macros: Robot, Words (consonants), Octave Up (+12 double), Space, Gate, Formant.
-  Clarity came from a clean carrier (no detune or drive) and narrow bands, not from more Enhance or level. The carrier type number for External (1) in the rack file is a guess until checked in a saved set.
+  Clarity came from a clean carrier (no detune or drive) and narrow bands, not from more Enhance or level. Carrier type 1 = External (confirmed in a saved set; Live writes the source as "AudioIn/Track.<id>/PostFxOut"). With a real saw carrier the Vocoder needs about -9 dB output or it clips.
 - Auto pitch-tracked robot (Robot Me) works but sounds more like the user's own voice. The keyboard-carrier vocoder is the keeper.
 
 ## The user's rig ("My guitar · Heavenly Tweed", = SEED)
