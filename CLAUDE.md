@@ -62,7 +62,7 @@ Audio: BlackHole 2ch + Multi-Output "Main Output" (Scarlett + BlackHole). Logic 
 ## Where we left off (2026-10-29)
 - Chords track: Yogurt Pour (live version has Drops 28, Gloop speed 35, Tail 85, Tail repeats 22). The user still hears it as "windy and continuous"; what they want is **milky**: smooth, creamy, soft and clear, with each chord going "gloop-gloo-gloo-gloo", faster and higher. The rebuilt rack (gate floor fixed) isn't loaded yet. Next: a milky design, or match a reference clip.
 - The user changes the brief as they listen: build, ask them to play, measure, and keep chat answers short.
-- The GitHub push is waiting on `gh auth login` (gh is installed).
+- GitHub: signed in as fiero-fan (gh). Work is on branch feat/chat-tone-loop, pushed; main is untouched.
 
 ## Roadmap
 1. ~~Chat loop: capture, analyze, visual page~~ (first version done)
